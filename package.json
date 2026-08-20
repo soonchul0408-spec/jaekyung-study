@@ -8,6 +8,7 @@
     "build": "vite build",
     "generate:data": "node scripts/buildExamData.mjs",
     "generate:march-data": "node scripts/buildMarchExamData.mjs",
+    "generate:may-data": "EXAM_MONTH=2025-05 node scripts/buildMarchExamData.mjs",
     "check:exam-parity": "node scripts/checkExamParity.mjs",
     "check:exam-quality": "node scripts/checkExamQuality.mjs",
     "check:explanations": "node scripts/checkExplanationQuality.mjs",

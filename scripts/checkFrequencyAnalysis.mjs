@@ -1,8 +1,6 @@
-import { questions as januaryQuestions } from '../src/data/questions.js'
-import { questions as marchQuestions } from '../src/data/questions-2025-03.js'
+import { questions } from '../src/data/examSets.js'
 import { frequencyAnalysis, frequencyEntryForProblem, validateFrequencyAnalysis } from '../src/data/frequencyAnalysis.js'
 
-const questions = [...januaryQuestions, ...marchQuestions]
 const validation = validateFrequencyAnalysis(questions)
 const topQuestions = questions.filter((question) => frequencyEntryForProblem(question.id))
 const subjectCounts = Object.fromEntries(['FR', 'TX', 'CM'].map((subject) => [subject, frequencyAnalysis.filter((entry) => entry.subject === subject).length]))

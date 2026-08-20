@@ -85,6 +85,18 @@ for (const entry of frequencyAnalysis) {
   entry.problemIds.push(...(marchFrequencyProblemIds[entry.subject]?.[entry.rank] || []))
 }
 
+// 5월 원문을 같은 TOP 12 분류 기준으로 직접 대조한 문항 ID입니다.
+const mayFrequencyQuestionNos = {
+  FR: { 1: [1,2,3,4,5], 2: [9,10,11], 3: [6,7,8], 4: [21,22,27,28,32], 5: [36,38,39,40], 6: [12,13], 7: [17,18,19], 8: [23,24,25,26], 9: [29,30,35], 10: [33,34], 11: [37], 12: [15,16] },
+  TX: { 1: [9,13,14,15,16,17], 2: [1,2,3,4], 3: [22,23,25,26,30], 4: [19,27], 5: [5,10,18,20], 6: [6], 7: [39], 8: [35,36,37,38], 9: [24], 10: [28,29], 11: [7,8], 12: [31,32,33,34,40] },
+  CM: { 1: [1,2], 2: [16,17,18,19,20], 3: [3,4,7,21,22], 4: [23,24,25], 5: [32,33,34,35,39], 6: [26,27,28,29,30,31], 7: [36,37,38], 8: [], 9: [8,9,10], 10: [11,12,13,14,15], 11: [5,6], 12: [40] },
+}
+
+for (const entry of frequencyAnalysis) {
+  const questionNos = mayFrequencyQuestionNos[entry.subject]?.[entry.rank] || []
+  entry.problemIds.push(...questionNos.map((number) => `2025-05-${entry.subject}-${String(number).padStart(2, '0')}`))
+}
+
 export function frequencyEntryForProblem(problemId) {
   return frequencyAnalysis.find((entry) => entry.problemIds.includes(problemId)) || null
 }

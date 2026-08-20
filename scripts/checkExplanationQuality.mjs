@@ -1,4 +1,4 @@
-import { questions } from '../src/data/questions.js'
+import { questions } from '../src/data/examSets.js'
 
 const calculationPattern = /계산하면|계산할|얼마인가|금액은 얼마|수량은 얼마|몇 원|최대금액/
 const failures = []
@@ -12,8 +12,8 @@ for (const question of questions) {
   }
   if (calculationPattern.test(question.stem)) {
     const calculation = question.calculation
-    if (!calculation?.formula || !calculation?.substitutions?.length || !calculation.result || calculation.verifiedAgainstAnswer !== true) {
-      failures.push(`${question.id}: 계산식·수치 대입·결과·정답 대조가 모두 필요합니다.`)
+    if (!calculation?.formula || calculation?.substitutions?.length < 2 || !calculation.result || calculation.verifiedAgainstAnswer !== true || !calculation.teachingExplanation || !/무엇을 구하는지|중간값|최종값|확정답안/.test(calculation.teachingExplanation)) {
+      failures.push(`${question.id}: 전문가 수준의 계산식·수치 대입·결과·검산·수험생용 설명이 모두 필요합니다.`)
     }
   }
 }

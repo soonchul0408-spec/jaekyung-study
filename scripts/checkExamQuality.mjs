@@ -28,7 +28,7 @@ for (const exam of examSets) {
   }
   for (const question of calculationQuestions) {
     const calculation = question.calculation
-    if (!calculation?.formula || !calculation.substitutions?.length || !calculation.result || calculation.verifiedAgainstAnswer !== true) errors.push(`${exam.id} ${question.id}: 계산형 문항의 계산식·수치 대입·결과·정답 대조 누락`)
+    if (!calculation?.formula || calculation.substitutions?.length < 2 || !calculation.result || calculation.verifiedAgainstAnswer !== true || !calculation.teachingExplanation || !/무엇을 구하는지|중간값|최종값|확정답안/.test(calculation.teachingExplanation)) errors.push(`${exam.id} ${question.id}: 전문가 수준의 계산식·수치 대입·결과·검산·수험생용 설명 누락`)
   }
 }
 
