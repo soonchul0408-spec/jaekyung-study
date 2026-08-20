@@ -1,0 +1,47 @@
+.explanation-pending {
+  margin: 0;
+  padding: 13px 2px;
+  color: #8b8172;
+  font-size: 0.86rem;
+}
+
+.answer-line {
+  background: #fff7e9;
+  padding: 10px 12px;
+  border-radius: 9px;
+}
+
+.note-panel h3 {
+  font-size: 0.93rem;
+  margin: 20px 0 6px;
+}
+
+.solution-steps,
+.choice-analysis {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.solution-steps li { margin: 7px 0; }
+
+.choice-analysis {
+  list-style: none;
+  padding-left: 0;
+}
+
+.choice-analysis li {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ead7d0;
+  font-size: 0.92rem;
+}
+
+.choice-analysis b { color: #9d4e39; }
+
+.explanation-disclaimer {
+  font-size: 0.78rem;
+  color: #806f67;
+  margin-top: 18px !important;
+}

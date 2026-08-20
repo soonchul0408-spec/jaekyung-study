@@ -1,0 +1,323 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "재경관리사 기출문제 사이트 분류 기준",
+  "purpose": "2025년 공식 기출 8회분(총 960문제)을 CPA 교재 목차 기준으로 일관되게 분류하기 위한 기준 데이터",
+  "rules": {
+    "primaryTopic": "각 문항에는 아래 topicId 중 하나를 반드시 지정한다.",
+    "secondaryTopics": "두 개 이상의 장을 함께 묻는 문항은 보조 topicId를 배열로 추가한다.",
+    "specificity": "문항의 계산 또는 판단을 직접 좌우하는 가장 좁은 주제를 primaryTopic으로 한다. 단순 언급된 배경 개념은 secondaryTopics에만 둔다.",
+    "unresolved": "교재 목차에 없는 특수 논점은 같은 과목의 OTHER 토픽으로 임시 분류하고 reviewNeeded를 true로 설정한다."
+  },
+  "subjects": [
+    {
+      "id": "FR",
+      "name": "재무회계",
+      "chapters": [
+        {
+          "id": "FR.FND",
+          "name": "재무회계의 기초",
+          "topics": [
+            {
+              "id": "FR.FND.CONCEPT",
+              "name": "재무보고와 개념체계"
+            },
+            {
+              "id": "FR.FND.PRESENT",
+              "name": "재무제표 표시"
+            }
+          ]
+        },
+        {
+          "id": "FR.REV",
+          "name": "수익",
+          "topics": [
+            {
+              "id": "FR.REV.BASIS",
+              "name": "수익인식의 기초"
+            },
+            {
+              "id": "FR.REV.CONTRACT",
+              "name": "계약의 식별"
+            },
+            {
+              "id": "FR.REV.PERFORMANCE",
+              "name": "수행의무의 식별"
+            },
+            {
+              "id": "FR.REV.PRICE",
+              "name": "거래가격의 산정"
+            },
+            {
+              "id": "FR.REV.ALLOCATION",
+              "name": "거래가격의 배분"
+            },
+            {
+              "id": "FR.REV.RECOGNITION",
+              "name": "수행의무 이행과 수익인식"
+            },
+            {
+              "id": "FR.REV.PRESENT",
+              "name": "계약원가와 재무제표 표시"
+            },
+            {
+              "id": "FR.REV.OTHER",
+              "name": "수익인식 기타사항"
+            }
+          ]
+        },
+        {
+          "id": "FR.CONSTRUCTION",
+          "name": "건설계약"
+        },
+        {
+          "id": "FR.INVENTORY",
+          "name": "재고자산과 농림어업"
+        },
+        {
+          "id": "FR.PPE",
+          "name": "유형자산"
+        },
+        {
+          "id": "FR.INTANGIBLE",
+          "name": "무형자산"
+        },
+        {
+          "id": "FR.FIN_LIABILITY",
+          "name": "금융부채"
+        },
+        {
+          "id": "FR.EMPLOYEE",
+          "name": "종업원급여"
+        },
+        {
+          "id": "FR.PROVISION",
+          "name": "충당부채"
+        },
+        {
+          "id": "FR.FIN_ASSET_BASIC",
+          "name": "금융자산(1): 기본상품·채무상품"
+        },
+        {
+          "id": "FR.FIN_ASSET_COMPLEX",
+          "name": "금융자산(2): 금융 및 수취채권"
+        },
+        {
+          "id": "FR.EQUITY",
+          "name": "자본"
+        },
+        {
+          "id": "FR.SPECIAL",
+          "name": "특수회계",
+          "topics": [
+            {
+              "id": "FR.SPECIAL.INSURANCE",
+              "name": "보험계약"
+            },
+            {
+              "id": "FR.SPECIAL.DERIVATIVE",
+              "name": "파생상품"
+            },
+            {
+              "id": "FR.SPECIAL.SHARE_BASED",
+              "name": "주식기준보상"
+            },
+            {
+              "id": "FR.SPECIAL.ASSOCIATE",
+              "name": "관계기업투자"
+            },
+            {
+              "id": "FR.SPECIAL.CONSOLIDATION",
+              "name": "연결회계"
+            },
+            {
+              "id": "FR.SPECIAL.CASHFLOW",
+              "name": "현금흐름표"
+            },
+            {
+              "id": "FR.SPECIAL.OTHER",
+              "name": "재무회계 기타사항"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TX",
+      "name": "세무회계",
+      "chapters": [
+        {
+          "id": "TX.VAT.01",
+          "name": "부가가치세의 기초이론"
+        },
+        {
+          "id": "TX.VAT.02",
+          "name": "부가가치세법 총칙"
+        },
+        {
+          "id": "TX.VAT.03",
+          "name": "과세거래"
+        },
+        {
+          "id": "TX.VAT.04",
+          "name": "영세율과 면세"
+        },
+        {
+          "id": "TX.VAT.05",
+          "name": "과세표준 계산의 일반원칙"
+        },
+        {
+          "id": "TX.VAT.06",
+          "name": "세금계산서·현금영수증"
+        },
+        {
+          "id": "TX.VAT.07",
+          "name": "매입세액의 공제"
+        },
+        {
+          "id": "TX.VAT.08",
+          "name": "대손세액공제와 환급"
+        },
+        {
+          "id": "TX.VAT.09",
+          "name": "가산세와 기타사항"
+        },
+        {
+          "id": "TX.VAT.10",
+          "name": "부가가치세의 납세절차"
+        },
+        {
+          "id": "TX.INC.01",
+          "name": "소득세법 총설"
+        },
+        {
+          "id": "TX.INC.02",
+          "name": "이자소득·배당소득"
+        },
+        {
+          "id": "TX.INC.03",
+          "name": "사업소득"
+        },
+        {
+          "id": "TX.INC.04",
+          "name": "근로·연금·기타소득"
+        },
+        {
+          "id": "TX.INC.05",
+          "name": "종합소득과세의 특례"
+        },
+        {
+          "id": "TX.INC.06",
+          "name": "종합소득세 과세표준의 계산"
+        },
+        {
+          "id": "TX.INC.07",
+          "name": "종합소득세액의 계산"
+        },
+        {
+          "id": "TX.INC.08",
+          "name": "퇴직소득"
+        },
+        {
+          "id": "TX.INC.09",
+          "name": "양도소득세의 납세절차"
+        },
+        {
+          "id": "TX.CORP.01",
+          "name": "법인세법 총설"
+        },
+        {
+          "id": "TX.CORP.02",
+          "name": "세무조정과 소득처분"
+        },
+        {
+          "id": "TX.CORP.03",
+          "name": "익금"
+        },
+        {
+          "id": "TX.CORP.04",
+          "name": "손금"
+        },
+        {
+          "id": "TX.CORP.05",
+          "name": "손익의 귀속사업연도와 자산·부채의 평가"
+        },
+        {
+          "id": "TX.CORP.06",
+          "name": "손금의 부인"
+        },
+        {
+          "id": "TX.CORP.07",
+          "name": "종업원급여·퇴직금"
+        },
+        {
+          "id": "TX.CORP.08",
+          "name": "부당행위계산의 부인"
+        },
+        {
+          "id": "TX.CORP.09",
+          "name": "과세표준과 세액의 계산"
+        }
+      ]
+    },
+    {
+      "id": "CM",
+      "name": "원가관리회계",
+      "chapters": [
+        {
+          "id": "CM.01",
+          "name": "간접원가배부 및 활동기준원가계산"
+        },
+        {
+          "id": "CM.02",
+          "name": "개별원가계산"
+        },
+        {
+          "id": "CM.03",
+          "name": "종합원가계산"
+        },
+        {
+          "id": "CM.04",
+          "name": "결합원가계산"
+        },
+        {
+          "id": "CM.05",
+          "name": "전부·변동·초변동원가계산"
+        },
+        {
+          "id": "CM.06",
+          "name": "CVP분석"
+        },
+        {
+          "id": "CM.07",
+          "name": "의사결정과 관련원가"
+        },
+        {
+          "id": "CM.08",
+          "name": "표준원가"
+        },
+        {
+          "id": "CM.09",
+          "name": "판매부문·투자중심점의 성과평가"
+        },
+        {
+          "id": "CM.10",
+          "name": "사내대체거래"
+        },
+        {
+          "id": "CM.11",
+          "name": "전략적 원가관리"
+        }
+      ]
+    }
+  ],
+  "questionRecord": {
+    "examMonth": "2025-01 | 2025-03 | 2025-05 | 2025-06 | 2025-07 | 2025-09 | 2025-11 | 2025-12",
+    "subjectId": "FR | TX | CM",
+    "questionNo": "1부터 40까지의 과목별 문항 번호",
+    "primaryTopicId": "위 taxonomy의 topicId 또는 chapter id",
+    "secondaryTopicIds": [],
+    "concept": "검색과 오답노트용 핵심 개념",
+    "answer": "공식 확정답안의 선택지 번호",
+    "reviewNeeded": false
+  }
+}

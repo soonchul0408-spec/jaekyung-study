@@ -1,0 +1,3 @@
+.option-evidence { display: block; margin-top: 7px; font-size: 0.72rem; font-weight: 700; }
+.option-evidence.correct { color: #6c4b9e; }
+.option-evidence.eliminate { color: #ae5047; }
