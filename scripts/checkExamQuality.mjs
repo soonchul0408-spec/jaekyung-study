@@ -2,6 +2,7 @@ import { examSets } from '../src/data/examSets.js'
 
 const errors = []
 const genericPatterns = [/공식 확정답안의 정답 선택지가 아닙니다/, /지문의 조건과 보기의 핵심 표현을 대조해 답안을 확인하세요/]
+const incompleteIncorrectReasonPatterns = [/단원 기준과 맞는지 확인/, /판단 기준과 충돌하기 때문/, /기준서·세법·원가관리 원칙과 대조해야/]
 const calculationPattern = /계산하면|계산할|얼마인가|얼마인\s*가|금액은 얼마|수량은 얼마|몇 원|최대금액/
 const incorrectQuestionPattern = /옳지 않은|아닌 것|해당하지 않는|가장 옳지 않은/
 const baseline = examSets.find((exam) => exam.baseline)
@@ -23,7 +24,7 @@ for (const exam of examSets) {
     if (incorrectQuestionPattern.test(question.stem)) {
       const answerAnalysis = question.choiceAnalysis?.find((item) => item.choiceNo === question.answer)
       const answerEvidence = question.optionEvidence?.find((item) => item.choiceNo === question.answer)?.text
-      if (!answerAnalysis || !/틀림|옳지|잘못|맞지 않|반대/.test(answerAnalysis.verdict) || !/틀린 이유|틀린 부분|잘못|맞지 않|반대/.test(answerAnalysis.reason) || !answerEvidence || !answerAnalysis.reason.includes(answerEvidence)) errors.push(`${exam.id} ${question.id}: ‘옳지 않은 것’ 정답의 구체적 오답 이유 누락`)
+      if (!answerAnalysis || !/틀림|옳지|잘못|맞지 않|반대/.test(answerAnalysis.verdict) || !/틀린 이유|틀린 부분|잘못|맞지 않|반대/.test(answerAnalysis.reason) || !/올바른 기준/.test(answerAnalysis.reason) || incompleteIncorrectReasonPatterns.some((pattern) => pattern.test(answerAnalysis.reason)) || !answerEvidence || !answerAnalysis.reason.includes(answerEvidence)) errors.push(`${exam.id} ${question.id}: ‘옳지 않은 것’ 정답의 구체적 오답 이유 누락`)
     }
   }
   for (const question of calculationQuestions) {

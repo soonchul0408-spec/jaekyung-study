@@ -159,8 +159,8 @@ function choiceAnalysisForQuestion(options, answer, guide, stem) {
   const asksForIncorrect = /옳지 않은|아닌 것|해당하지 않는/.test(stem)
   return options.map((option, index) => {
     const focus = optionFocus(option)
-    if (index + 1 === answer && asksForIncorrect) return { choiceNo: index + 1, verdict: '틀림(정답)', reason: `틀린 이유는 “${focus}”라는 설명이 ${guide}의 판단 기준과 충돌하기 때문입니다. 이 문항은 옳지 않은 설명을 고르는 문제이므로, 해당 표현을 기준서·세법·원가관리 원칙과 대조해야 합니다.` }
-    if (index + 1 === answer) return { choiceNo: index + 1, verdict: '정답', reason: `“${focus}”라는 표현이 지문의 조건과 맞는지 확인합니다. ${guide} 공식 확정답안 ${['①','②','③','④'][answer - 1]}번과 일치합니다.` }
+    if (index + 1 === answer && asksForIncorrect) return { choiceNo: index + 1, verdict: '틀림(정답)', reason: `틀린 부분은 “${focus}”입니다. 올바른 기준은 ${guide}입니다. 따라서 이 선택지가 제시한 내용은 그 기준을 잘못 적용한 것이므로 ‘옳지 않은 것’의 정답입니다.` }
+    if (index + 1 === answer) return { choiceNo: index + 1, verdict: '정답', reason: `정답 표현은 “${focus}”입니다. ${guide} 이 기준을 지문 조건에 적용하면 ${['①','②','③','④'][answer - 1]}번이 정답입니다.` }
     return { choiceNo: index + 1, verdict: '오답', reason: `“${focus}”라는 표현을 지문의 조건·예외와 대조합니다. ${guide} 이 선택지는 공식 확정답안 ${['①','②','③','④'][answer - 1]}번과 일치하지 않습니다.` }
   })
 }

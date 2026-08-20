@@ -112,7 +112,7 @@ const selfExplanations = {
       '①은 이를 규정중심이라고 반대로 설명하므로 정답입니다.',
     ],
     choiceAnalysis: [
-      { choiceNo: 1, verdict: '틀림(정답)', reason: '틀린 부분은 “규정중심”입니다. K-IFRS는 원칙중심 회계기준이므로 이 설명이 맞지 않습니다.' },
+      { choiceNo: 1, verdict: '틀림(정답)', reason: '틀린 부분은 “규정중심”입니다. 올바른 기준은 K-IFRS가 거래의 경제적 실질을 판단하는 원칙중심 회계기준이라는 점입니다. 따라서 이 설명이 맞지 않습니다.' },
       { choiceNo: 2, verdict: '맞음', reason: 'K-IFRS 도입 이후 공정가치 측정의 적용 범위가 확대되었습니다.' },
       { choiceNo: 3, verdict: '맞음', reason: 'K-IFRS 체계에서는 연결재무제표를 기본 재무제표로 봅니다.' },
       { choiceNo: 4, verdict: '맞음', reason: '국제회계기준은 여러 국가와 이해관계자의 협력을 바탕으로 제정됩니다.' },
@@ -130,7 +130,7 @@ const selfExplanations = {
       { choiceNo: 1, verdict: '맞음', reason: '목적적합한 정보는 이용자의 의사결정에 차이를 만들 수 있는 정보입니다. 예측가치·확인가치 중 하나 또는 둘 다가 있으면 의사결정에 영향을 줄 수 있으므로 ①의 설명은 맞습니다.' },
       { choiceNo: 2, verdict: '맞음', reason: '유용한 정보는 목적적합하기만 해서는 부족하고, 나타내려는 경제현상의 실질을 충실하게 표현해야 합니다. ②는 목적적합성과 표현충실성이 함께 필요하다는 기준을 정확히 설명합니다.' },
       { choiceNo: 3, verdict: '맞음', reason: '표현충실성은 완전성·중립성·오류 없음으로 설명합니다. ③은 이 세 요소를 모두 제시하므로 개념체계의 표현충실성 기준과 일치합니다.' },
-      { choiceNo: 4, verdict: '틀림(정답)', reason: '틀린 부분은 보강적 질적 특성에 “신뢰성, 보수성”을 포함한 점입니다. 올바른 목록은 비교가능성·검증가능성·적시성·이해가능성입니다. 보수성은 불확실성 아래에서 중립성을 뒷받침하는 신중성이지 보강적 질적 특성이 아니므로 ④가 정답입니다.' },
+      { choiceNo: 4, verdict: '틀림(정답)', reason: '틀린 부분은 보강적 질적 특성에 “신뢰성, 보수성”을 포함한 점입니다. 올바른 기준은 비교가능성·검증가능성·적시성·이해가능성이라는 목록입니다. 보수성은 불확실성 아래에서 중립성을 뒷받침하는 신중성이지 보강적 질적 특성이 아니므로 ④가 정답입니다.' },
     ],
     commonMistake: '과거 개념체계의 “신뢰성” 표현과 보수성을 보강적 질적 특성 목록에 넣는 실수입니다. 네 가지 보강적 질적 특성을 그대로 구분해 기억해야 합니다.',
   },
@@ -143,7 +143,7 @@ const selfExplanations = {
     ],
     choiceAnalysis: [
       { choiceNo: 1, verdict: '맞음', reason: '투자부동산은 임대수익·시세차익 또는 둘 다를 얻기 위해 보유하는 부동산입니다.' },
-      { choiceNo: 2, verdict: '틀림', reason: '틀린 부분은 “투자부동산의 유형별로”입니다. 공정가치모형 또는 원가모형을 선택하면 모든 투자부동산에 일관되게 적용해야 하며, 유형별로 따로 선택할 수 없습니다.' },
+      { choiceNo: 2, verdict: '틀림', reason: '틀린 부분은 “투자부동산의 유형별로”입니다. 올바른 기준은 공정가치모형 또는 원가모형을 선택하면 모든 투자부동산에 일관되게 적용해야 한다는 것입니다. 따라서 유형별로 따로 선택할 수 없습니다.' },
       { choiceNo: 3, verdict: '맞음', reason: '공정가치모형에서는 매 보고기간 공정가치로 다시 측정하므로 별도의 감가상각을 하지 않습니다.' },
       { choiceNo: 4, verdict: '맞음', reason: '투자부동산 공정가치 변동에서 생긴 이익·손실은 기타포괄손익이 아니라 당기손익으로 인식합니다.' },
     ],
@@ -338,8 +338,8 @@ function conciseExplanation({ id, primaryTopicId, topicName, answer, options, st
       : ['문제가 요구하는 판단 기준을 확인합니다.', guide, `기준에 맞는 선택지는 ${['①','②','③','④'][answer - 1]} ${answer}번입니다.`],
     choiceAnalysis: options.map((option, index) => index + 1 === answer
       ? asksForIncorrect
-        ? { choiceNo: index + 1, verdict: '틀림(정답)', reason: `틀린 부분으로 확인할 표현은 “${optionFocus(option)}”입니다. ${guide} 이 표현이 단원 기준과 맞는지 확인해 오답으로 판단합니다.` }
-        : { choiceNo: index + 1, verdict: '정답', reason: `공식 확정답안과 일치합니다. ${guide}` }
+        ? { choiceNo: index + 1, verdict: '틀림(정답)', reason: `틀린 부분은 “${optionFocus(option)}”입니다. 올바른 기준은 ${guide}입니다. 따라서 이 선택지가 제시한 내용은 그 기준을 잘못 적용한 것이므로 ‘옳지 않은 것’의 정답입니다.` }
+        : { choiceNo: index + 1, verdict: '정답', reason: `이 선택지는 “${optionFocus(option)}”이라는 요건을 제시합니다. ${guide} 따라서 해당 요건을 충족하므로 정답입니다.` }
       : { choiceNo: index + 1, verdict: '오답', reason: `${topicName}의 핵심 기준과 맞는지 다시 확인하세요.` }),
     commonMistake: calculation ? '계산 전에 단위·기간·포함 여부를 확인하지 않고 바로 수치를 대입하는 실수입니다.' : '문제의 “옳지 않은 것”, “포함 여부”, “예외” 표현을 놓치는 실수입니다.',
   }
