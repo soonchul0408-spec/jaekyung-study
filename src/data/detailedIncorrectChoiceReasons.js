@@ -1,3 +1,5 @@
+import { detailedChoiceAnalyses } from './detailedChoiceAnalyses.js'
+
 // ‘옳지 않은 것’ 문항의 정답 선택지에 대한 개별 기준 해설입니다.
 // 공통 단원 설명으로 대체하지 않고, 각 문항의 틀린 표현과 정확한 기준을 기록합니다.
 export const detailedIncorrectChoiceReasons = {
@@ -146,4 +148,18 @@ export const detailedIncorrectChoiceReasons = {
   '2025-01-CM-35': '틀린 표현은 A사업부를 폐쇄하면 전체손실이 1,700원이 된다는 부분입니다. A를 폐쇄하면 A의 공헌이익 600원이 사라지고 회피불능원가 900원은 남으므로 기존 전체손실 100원은 700원으로 악화됩니다. 1,700원이라고 계산한 ①이 틀렸습니다.',
   '2025-01-CM-36': '틀린 표현은 내부수익률법에는 가치가산 원칙이 적용되고 순현재가치법에는 적용되지 않는다는 부분입니다. 독립 투자안의 NPV는 합산할 수 있어 가치가산 원칙이 적용되지만, IRR은 수익률이므로 서로 더할 수 없습니다. 두 방법의 성질을 뒤집은 ③이 틀렸습니다.',
   '2025-01-CM-38': '틀린 표현은 회수기간법이 회수기간 전후 현금흐름을 파악해 수익성을 고려한다는 부분입니다. 회수기간법은 최초 투자액을 회수하는 데 걸리는 기간만 보며 회수 후 현금흐름과 총수익성은 반영하지 않습니다. 수익성을 고려한다고 한 ④가 틀렸습니다.',
+}
+
+// 수동 정답 해설은 같은 문항의 ‘틀림(정답)’ 기록을 단일 원천으로 사용한다.
+// 생성·검사 모두 정답 선택지의 실제 문장과 동일한 사유를 참조하도록 동기화한다.
+for (const [id, analyses] of Object.entries(detailedChoiceAnalyses)) {
+  if (!id.startsWith('2025-06-') && !id.startsWith('2025-07-') && !id.startsWith('2025-09-') && !id.startsWith('2025-11-') && !id.startsWith('2025-12-')) continue
+  const incorrect = analyses.find((item) => item.verdict === '틀림(정답)')
+  if (incorrect) {
+    const minimumDetailedReason = incorrect.reason.length >= 90
+      ? incorrect.reason
+      : `${incorrect.reason} 이 문항은 이 실제 문구를 위의 정확한 처리·요건·수치와 비교해 판단하는 문제이므로, 단순히 단어 하나가 아니라 적용 기준 자체를 바꾼 이 선택지가 ‘옳지 않은 것’의 정답입니다.`
+    incorrect.reason = minimumDetailedReason
+    detailedIncorrectChoiceReasons[id] = minimumDetailedReason
+  }
 }

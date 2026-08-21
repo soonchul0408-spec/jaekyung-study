@@ -1,0 +1,15 @@
+/* 채점·오답 재풀이: 기존 문제 카드 톤을 유지하면서 선택 결과를 텍스트와 색으로 함께 표시한다. */
+.answer-guide{margin:16px 0 0;color:#756d60;font-size:.78rem;line-height:1.5}
+.options{margin-top:12px}
+.options li{display:block;padding:0;background:transparent}
+.options li button{display:flex;width:100%;gap:10px;padding:12px 9px;border:1px solid transparent;border-radius:10px;background:#f7f3ec;text-align:left;transition:background .15s,border-color .15s}
+.options li button:hover{border-color:#cdbba5;background:#f3eadb}
+.options li>button>span{font-weight:800;color:#8c7766;flex:0 0 auto}
+.options .is-correct button{border-color:#5c9573;background:#e2f1e5}
+.options .is-wrong button{border-color:#d36e54;background:#fbe3dd}
+.answer-result{margin:15px 0 0;padding:12px;border-radius:10px;font-size:.84rem;line-height:1.55}
+.answer-result.correct{background:#e2f1e5;color:#285b3f}
+.answer-result.wrong{background:#fbe3dd;color:#8e4735}
+.retry-card{margin:18px 0;padding:20px;border-radius:16px;background:#2d4c46;color:#fff}
+.retry-card strong{font-size:1.25rem}
+.retry-card p{margin:7px 0 16px;color:#dce8df;font-size:.84rem;line-height:1.55}

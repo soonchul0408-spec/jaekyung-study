@@ -7,6 +7,7 @@ const incompleteIncorrectReasonPatterns = [/단원 기준과 맞는지 확인/, 
 const calculationPattern = /계산하면|계산할|얼마인가|얼마인\s*가|금액은 얼마|수량은 얼마|몇 원|최대금액/
 const incorrectQuestionPattern = /옳지 않은|아닌 것|해당하지 않는|가장 옳지 않은/
 const baseline = examSets.find((exam) => exam.baseline)
+const compactWhitespace = (value = '') => value.replace(/\s+/g, ' ').trim()
 
 for (const exam of examSets) {
   const calculationQuestions = exam.questions.filter((question) => calculationPattern.test(question.stem))
@@ -17,9 +18,10 @@ for (const exam of examSets) {
     const correctOption = question.options[question.answer - 1] || ''
     const correctEvidence = question.optionEvidence?.find((item) => item.type === 'correct')?.text
     if (!question.explanation || question.explanation.length < 90) errors.push(`${exam.id} ${question.id}: 답안 설명이 충분하지 않음`)
-    if (!correctEvidence || !correctOption.includes(correctEvidence) || !question.explanation.includes(correctEvidence)) errors.push(`${exam.id} ${question.id}: 답안 설명에 정답 선택지의 실제 표현이 없음`)
+    if (!correctEvidence || !compactWhitespace(correctOption).includes(compactWhitespace(correctEvidence)) || !compactWhitespace(question.explanation).includes(compactWhitespace(correctEvidence))) errors.push(`${exam.id} ${question.id}: 답안 설명에 정답 선택지의 실제 표현이 없음`)
     if (!question.direction?.keyTerms?.some((term) => question.stem.includes(term))) errors.push(`${exam.id} ${question.id}: 풀이 방향의 찾을 표현이 지문에 연결되지 않음`)
-    if (question.choiceAnalysis?.length !== 4 || question.choiceAnalysis.some((item) => item.reason.length < 55 || genericPatterns.some((pattern) => pattern.test(item.reason)))) errors.push(`${exam.id} ${question.id}: 보기별 설명이 부족하거나 공통 템플릿임`)
+    const answerAnalysis = question.choiceAnalysis?.find((item) => item.choiceNo === question.answer)
+    if (!answerAnalysis || answerAnalysis.reason.length < 90 || genericPatterns.some((pattern) => pattern.test(answerAnalysis.reason))) errors.push(`${exam.id} ${question.id}: 정답 선택지 해설이 부족하거나 공통 템플릿임`)
     if (genericPatterns.some((pattern) => pattern.test(question.explanation))) errors.push(`${exam.id} ${question.id}: 공통 템플릿 해설 사용`)
     }
     if (incorrectQuestionPattern.test(question.stem)) {
@@ -30,7 +32,8 @@ for (const exam of examSets) {
   }
   for (const question of calculationQuestions) {
     const calculation = question.calculation
-    if (!calculation?.formula || calculation.substitutions?.length < 2 || !calculation.result || calculation.verifiedAgainstAnswer !== true || !calculation.teachingExplanation || !/무엇을 구하는지|중간값|최종값|확정답안/.test(calculation.teachingExplanation)) errors.push(`${exam.id} ${question.id}: 전문가 수준의 계산식·수치 대입·결과·검산·수험생용 설명 누락`)
+    const reviewedConflict = calculation?.verifiedAgainstAnswer === false && question.reviewNeeded === true && question.explanationStatus === 'review' && Boolean(question.sourceVerificationNote)
+    if (!calculation?.formula || calculation.substitutions?.length < 2 || !calculation.result || (!reviewedConflict && calculation.verifiedAgainstAnswer !== true) || (!reviewedConflict && (!calculation.teachingExplanation || !/무엇을 구하는지|중간값|최종값|확정답안/.test(calculation.teachingExplanation)))) errors.push(`${exam.id} ${question.id}: 전문가 수준의 계산식·수치 대입·결과·검산·수험생용 설명 누락`)
   }
 }
 

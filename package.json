@@ -12,7 +12,10 @@
     "check:exam-parity": "node scripts/checkExamParity.mjs",
     "check:exam-quality": "node scripts/checkExamQuality.mjs",
     "check:explanations": "node scripts/checkExplanationQuality.mjs",
-    "check:frequency": "node scripts/checkFrequencyAnalysis.mjs"
+    "check:source-integrity": "node scripts/checkSourceIntegrity.mjs",
+    "check:frequency": "node scripts/checkFrequencyAnalysis.mjs",
+    "audit:student-explanations": "node scripts/auditStudentExplanationQuality.mjs",
+    "audit:expert-facts": "node scripts/auditExpertFactReview.mjs"
   },
   "devDependencies": {
     "vite": "^8.1.5"

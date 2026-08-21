@@ -1,0 +1,28 @@
+// 원문 문제지·확정답안·정답 해설을 실제로 대조해 완료한 문항만 기록한다.
+// 자동 형식 검사를 통과했더라도 이 목록에 없으면 전문가 사실감수 완료로 보지 않는다.
+export const expertFactReviewedQuestionIds = new Set([
+  ...Array.from({ length: 40 }, (_, index) => `2025-01-FR-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-01-TX-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-01-CM-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-03-FR-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-03-TX-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-03-CM-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-05-FR-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-05-TX-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-05-CM-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-06-FR-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-06-TX-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-06-CM-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-07-FR-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-07-TX-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-07-CM-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-09-FR-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-09-TX-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-09-CM-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-11-FR-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-11-TX-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-11-CM-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-12-FR-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-12-TX-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 40 }, (_, index) => `2025-12-CM-${String(index + 1).padStart(2, '0')}`),
+])

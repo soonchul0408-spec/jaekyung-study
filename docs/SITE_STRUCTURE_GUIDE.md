@@ -71,6 +71,8 @@
 
 - `currentId`: 마지막으로 연 문제
 - `favorites`: 헷갈리는 문제 ID 목록
+- `attempts`: 문항별 마지막 선택 번호·정오답·풀이 시각
+- `wrongQuestionIds`: 마지막 선택이 오답인 문항 ID 목록. 정답으로 다시 풀면 자동 제거된다.
 - `studiedFrequencyKeys`: 빈출 유형 학습 완료 상태 (`FR-1` 같은 과목-순위 키)
 
 새 상태를 추가할 때는 기존 필드를 보존하고 `persist()`를 통해 함께 저장한다.

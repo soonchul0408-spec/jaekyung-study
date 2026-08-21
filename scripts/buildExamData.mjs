@@ -1,11 +1,15 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { detailedIncorrectChoiceReasons } from '../src/data/detailedIncorrectChoiceReasons.js'
+import { detailedChoiceAnalyses, detailedChoiceAnalysisFor, expertLearningDataFor } from '../src/data/detailedChoiceAnalyses.js'
 
 const questionsText = readFileSync('/private/tmp/jaekyung-extract/questions.txt', 'utf8')
 const answersText = readFileSync('/private/tmp/jaekyung-extract/answers.txt', 'utf8')
 const taxonomy = JSON.parse(readFileSync('src/data/taxonomy.json', 'utf8'))
 const answerMap = Object.fromEntries([...answersText.matchAll(/(\d+)\s+([1-4])/g)].map((match) => [Number(match[1]), Number(match[2])]))
 const markers = [...questionsText.matchAll(/【\s*(\d+)\s*】/g)]
+const sourceVerificationNotes = {
+  '2025-01-TX-22': '원문은 국내이자 10,000,000원, 내국법인 현금배당 20,000,000원, 외국법인 현금배당 5,000,000원 및 배당소득 가산율 10%를 제시하고 확정답안은 ② 36,500,000원이다. 문면 그대로 내국법인 배당에 10%를 가산하면 10,000,000 + 20,000,000 × 1.10 + 5,000,000 = 37,000,000원으로 계산되어 36,500,000원의 공제·조정 근거가 원문에 없다. 확정답안은 보존하고 추가 공식 근거 확인 전까지 검토 상태로 둔다.',
+}
 
 function isTableStart(line, nextLine) {
   const hasColumnLikeValues = (value) => (value.match(/\d+(?:[,.]\d+)?(?:%|원|년|월|일|개|주)?/g) || []).length >= 3
@@ -331,6 +335,7 @@ function conciseExplanation({ id, primaryTopicId, topicName, answer, options, st
     const explanation = selfExplanations[id]
     const detailedReason = detailedIncorrectChoiceReasons[id]
     if (detailedReason) explanation.choiceAnalysis = explanation.choiceAnalysis.map((choice) => choice.choiceNo === answer ? { ...choice, verdict: /옳지 않은|해당하지 않는|아닌 것/.test(stem) ? '틀림(정답)' : choice.verdict, reason: detailedReason } : choice)
+    if (detailedChoiceAnalyses[id]) explanation.choiceAnalysis = detailedChoiceAnalyses[id]
     return explanation
   }
   const guide = topicGuides[primaryTopicId] || `${topicName}의 기준을 문제 조건에 적용합니다.`
@@ -342,7 +347,7 @@ function conciseExplanation({ id, primaryTopicId, topicName, answer, options, st
     solutionSteps: calculation
       ? ['문제의 금액·수량·기간을 먼저 구분합니다.', formula || `${topicName}의 계산 기준을 적용합니다.`, `계산 결과가 ${['①','②','③','④'][answer - 1]} ${answer}번과 일치하는지 확인합니다.`]
       : ['문제가 요구하는 판단 기준을 확인합니다.', guide, `기준에 맞는 선택지는 ${['①','②','③','④'][answer - 1]} ${answer}번입니다.`],
-    choiceAnalysis: options.map((option, index) => index + 1 === answer
+    choiceAnalysis: detailedChoiceAnalyses[id] || options.map((option, index) => index + 1 === answer
       ? asksForIncorrect
         ? { choiceNo: index + 1, verdict: '틀림(정답)', reason: detailedIncorrectChoiceReasons[id] || `틀린 부분은 “${optionFocus(option)}”입니다. 올바른 기준은 ${guide}입니다. 따라서 이 선택지가 제시한 내용은 그 기준을 잘못 적용한 것이므로 ‘옳지 않은 것’의 정답입니다.` }
         : { choiceNo: index + 1, verdict: '정답', reason: `이 선택지는 “${optionFocus(option)}”이라는 요건을 제시합니다. ${guide} 따라서 해당 요건을 충족하므로 정답입니다.` }
@@ -361,23 +366,51 @@ const questions = markers.map((marker, index) => {
   const topicName = topicNames[topic.primaryTopicId]
   const id = `2025-01-${subject}-${String(number - (subject === 'FR' ? 0 : subject === 'TX' ? 40 : 80)).padStart(2, '0')}`
   const selfExplanation = conciseExplanation({ id, primaryTopicId: topic.primaryTopicId, topicName, answer: answerMap[number], options, stem })
+  const verifiedIncorrectReason = detailedIncorrectChoiceReasons[id]
+  if (verifiedIncorrectReason && !detailedChoiceAnalyses[id]) {
+    selfExplanation.choiceAnalysis = selfExplanation.choiceAnalysis.map((choice) => choice.choiceNo === answerMap[number]
+      ? { ...choice, verdict: /옳지 않은|아닌 것|해당하지 않는/.test(stem) ? '틀림(정답)' : choice.verdict, reason: verifiedIncorrectReason }
+      : choice)
+  }
   const evidence = evidenceFor(stem, options, answerMap[number])
   const optionEvidence = optionEvidenceFor(options, answerMap[number])
   const direction = directionOverrides[id] || studyDirection({ primaryTopicId: topic.primaryTopicId, topicName, stem, evidence })
+  selfExplanation.choiceAnalysis = detailedChoiceAnalysisFor({ id, options, answer: answerMap[number], stem, concept: topicName, direction, calculation: verifiedCalculations[id] || null })
+  if (verifiedIncorrectReason && !detailedChoiceAnalyses[id]) {
+    selfExplanation.choiceAnalysis = selfExplanation.choiceAnalysis.map((choice) => choice.choiceNo === answerMap[number]
+      ? { ...choice, verdict: /옳지 않은|아닌 것|해당하지 않는/.test(stem) ? '틀림(정답)' : choice.verdict, reason: verifiedIncorrectReason }
+      : choice)
+  }
+  const expertLearning = expertLearningDataFor({
+    id,
+    stem,
+    options,
+    answer: answerMap[number],
+    choiceAnalysis: selfExplanation.choiceAnalysis,
+    calculation: verifiedCalculations[id] || null,
+    topic: topicName,
+  })
+  const sourceVerificationNote = sourceVerificationNotes[id] || null
+  const calculation = verifiedCalculations[id]
+    ? sourceVerificationNote
+      ? { ...verifiedCalculations[id], result: '원문 확정답안 36,500,000원 / 문면 독립계산 37,000,000원', verifiedAgainstAnswer: false }
+      : verifiedCalculations[id]
+    : null
   return {
     id,
     examMonth: '2025-01', year: 2025, round: '1월', subjectId: subject,
     questionNo: number - (subject === 'FR' ? 0 : subject === 'TX' ? 40 : 80), number,
     primaryTopicId: topic.primaryTopicId, secondaryTopicIds: topic.secondaryTopicIds,
-    concept: topicName, reviewNeeded: topic.reviewNeeded, stem, options, answer: answerMap[number] || null,
-    evidence, optionEvidence, evidenceColor: 'curated', direction,
-    explanation: selfExplanation?.explanation || null,
-    solutionSteps: selfExplanation?.solutionSteps || [],
+    concept: topicName, reviewNeeded: topic.reviewNeeded || Boolean(sourceVerificationNote), stem, options, answer: answerMap[number] || null,
+    evidence, optionEvidence, evidenceColor: 'curated', direction: { ...direction, ...expertLearning.direction },
+    explanation: expertLearning.explanation,
+    solutionSteps: expertLearning.solutionSteps,
     choiceAnalysis: selfExplanation?.choiceAnalysis || [],
     relatedConcepts: [topicName, ...topic.secondaryTopicIds.map((id) => topicNames[id])],
-    commonMistake: selfExplanation?.commonMistake || null,
-    calculation: verifiedCalculations[id] || null,
-    explanationStatus: 'completed',
+    commonMistake: expertLearning.commonMistake,
+    calculation,
+    sourceVerificationNote,
+    explanationStatus: sourceVerificationNote ? 'review' : 'completed',
   }
 }).filter((question) => question.options.length === 4)
 

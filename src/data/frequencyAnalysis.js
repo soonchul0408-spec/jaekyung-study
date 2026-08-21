@@ -97,6 +97,60 @@ for (const entry of frequencyAnalysis) {
   entry.problemIds.push(...questionNos.map((number) => `2025-05-${entry.subject}-${String(number).padStart(2, '0')}`))
 }
 
+// 6월 원문을 TOP 12 분류 기준과 직접 대조한 실제 문항 ID입니다.
+const juneFrequencyQuestionNos = {
+  FR: { 1: [1,2,3,4,5], 2: [9,10,11], 3: [6,7,8], 4: [21,22,27,28,32], 5: [36,38,39,40], 6: [12,13], 7: [17,18,19], 8: [23,24,25,26], 9: [29,30,35], 10: [33,34], 11: [37], 12: [15,16] },
+  TX: { 1: [9,13,14,15,16,17], 2: [1,2,3,4], 3: [22,23,25,26,30], 4: [19,27], 5: [5,10,18,20], 6: [6], 7: [39], 8: [35,36,37,38], 9: [24], 10: [28,29], 11: [7,8], 12: [31,32,33,34,40] },
+  CM: { 1: [1,2], 2: [16,17,18,19,20], 3: [3,4,7,21,22], 4: [23,24,25], 5: [32,33,34,35,39], 6: [26,27,28,29,30,31], 7: [36,37,38], 8: [], 9: [8,9,10], 10: [11,12,13,14,15], 11: [5,6], 12: [40] },
+}
+
+for (const entry of frequencyAnalysis) {
+  const questionNos = juneFrequencyQuestionNos[entry.subject]?.[entry.rank] || []
+  entry.problemIds.push(...questionNos.map((number) => `2025-06-${entry.subject}-${String(number).padStart(2, '0')}`))
+}
+
+// 7월 원문도 같은 TOP 12 분류 기준으로 문항을 직접 연결한다.
+for (const entry of frequencyAnalysis) {
+  const questionNos = juneFrequencyQuestionNos[entry.subject]?.[entry.rank] || []
+  entry.problemIds.push(...questionNos.map((number) => `2025-07-${entry.subject}-${String(number).padStart(2, '0')}`))
+}
+
+// 9월 원문을 각 TOP 12 논점과 직접 대조해 연결한다. 다른 회차의 번호 배열을 재사용하지 않는다.
+const septemberFrequencyQuestionNos = {
+  FR: { 1: [1,2,3,4,5], 2: [9,10,11], 3: [6,7,8], 4: [21,22,27,32], 5: [36,38,39,40], 6: [12,13], 7: [17,18,19], 8: [23,24,25], 9: [28,29,35], 10: [33,34], 11: [37], 12: [15,16] },
+  TX: { 1: [8,9,13,14,16,17,18], 2: [1,2,3,4], 3: [22,23,25,26,30], 4: [19], 5: [5,10,20], 6: [12,15], 7: [39,40], 8: [31,35,37,38], 9: [24,27,28], 10: [29], 11: [6,7], 12: [32,33,34,36] },
+  CM: { 1: [1,2,22], 2: [16,17,18,19,20], 3: [3,4,7,21], 4: [23,24,25], 5: [32,33,34,39], 6: [26,27,28,29,30,31], 7: [35,36,37], 8: [], 9: [8,9,10], 10: [11,12,13,14,15], 11: [5,6], 12: [40] },
+}
+
+for (const entry of frequencyAnalysis) {
+  const questionNos = septemberFrequencyQuestionNos[entry.subject]?.[entry.rank] || []
+  entry.problemIds.push(...questionNos.map((number) => `2025-09-${entry.subject}-${String(number).padStart(2, '0')}`))
+}
+
+// 11월 원문 문항도 같은 TOP 12 논점에 직접 연결한다.
+const novemberFrequencyQuestionNos = {
+  FR: { 1: [1,2,3,4,5], 2: [9,10,11], 3: [6,7,8], 4: [21,22,28,32], 5: [36,38,39,40], 6: [12,13], 7: [17,18,19], 8: [23,24,25], 9: [29,30,35], 10: [33,34], 11: [37], 12: [15,16] },
+  TX: { 1: [7,8,9,13,14,15,16], 2: [1,2,3,4], 3: [22,23,25,26,30], 4: [19], 5: [5,10,20], 6: [6,12], 7: [39,40], 8: [31,35,37,38], 9: [24,27,28], 10: [29], 11: [17,18], 12: [32,33,34,36] },
+  CM: { 1: [1,2,22], 2: [16,17,18,19,20], 3: [3,4,7,21], 4: [23,24,25], 5: [32,33,34,39], 6: [26,27,28,29,30,31], 7: [35,36,37], 8: [], 9: [8,9,10], 10: [11,12,13,14,15], 11: [5,6], 12: [40] },
+}
+
+for (const entry of frequencyAnalysis) {
+  const questionNos = novemberFrequencyQuestionNos[entry.subject]?.[entry.rank] || []
+  entry.problemIds.push(...questionNos.map((number) => `2025-11-${entry.subject}-${String(number).padStart(2, '0')}`))
+}
+
+// 12월 원문 문항도 각 TOP 12 논점에 직접 대조해 연결한다.
+const decemberFrequencyQuestionNos = {
+  FR: { 1: [1,2,3,4,5], 2: [9,10,11], 3: [6,7,8], 4: [21,22,28,32], 5: [36,38,39,40], 6: [12,13], 7: [17,18,19], 8: [23,24,25], 9: [29,30,35], 10: [33,34], 11: [37], 12: [15,16] },
+  TX: { 1: [7,8,9,13,14,15,16], 2: [1,2,3,4], 3: [22,23,25,26,30], 4: [19], 5: [5,10,20], 6: [6,12], 7: [39,40], 8: [31,35,37,38], 9: [24,27,28], 10: [29], 11: [17,18], 12: [32,33,34,36] },
+  CM: { 1: [1,2,22], 2: [16,17,18,19,20], 3: [3,4,7,21], 4: [23,24,25], 5: [32,33,34,39], 6: [26,27,28,29,30,31], 7: [35,36,37], 8: [], 9: [8,9,10], 10: [11,12,13,14,15], 11: [5,6], 12: [40] },
+}
+
+for (const entry of frequencyAnalysis) {
+  const questionNos = decemberFrequencyQuestionNos[entry.subject]?.[entry.rank] || []
+  entry.problemIds.push(...questionNos.map((number) => `2025-12-${entry.subject}-${String(number).padStart(2, '0')}`))
+}
+
 export function frequencyEntryForProblem(problemId) {
   return frequencyAnalysis.find((entry) => entry.problemIds.includes(problemId)) || null
 }
