@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs'
+import { detailedIncorrectChoiceReasons } from '../src/data/detailedIncorrectChoiceReasons.js'
 
 // 기본값은 3월이며, 새 회차는 EXAM_MONTH=2025-05처럼 지정해 같은 추출 규칙을 재사용합니다.
 const examMonth = process.env.EXAM_MONTH || '2025-03'
@@ -155,12 +156,12 @@ function choiceAnalysisFor(options, answer, guide) {
       : { choiceNo: index + 1, verdict: '오답', reason: `“${focus}”라는 표현을 지문의 조건·예외와 대조합니다. ${guide} 이 선택지는 공식 확정답안 ${['①','②','③','④'][answer - 1]}번과 일치하지 않습니다.` }
   })
 }
-function choiceAnalysisForQuestion(options, answer, guide, stem) {
+function choiceAnalysisForQuestion(options, answer, guide, stem, id) {
   const asksForIncorrect = /옳지 않은|아닌 것|해당하지 않는/.test(stem)
   return options.map((option, index) => {
     const focus = optionFocus(option)
-    if (index + 1 === answer && asksForIncorrect) return { choiceNo: index + 1, verdict: '틀림(정답)', reason: `틀린 부분은 “${focus}”입니다. 올바른 기준은 ${guide}입니다. 따라서 이 선택지가 제시한 내용은 그 기준을 잘못 적용한 것이므로 ‘옳지 않은 것’의 정답입니다.` }
-    if (index + 1 === answer) return { choiceNo: index + 1, verdict: '정답', reason: `정답 표현은 “${focus}”입니다. ${guide} 이 기준을 지문 조건에 적용하면 ${['①','②','③','④'][answer - 1]}번이 정답입니다.` }
+    if (index + 1 === answer && asksForIncorrect) return { choiceNo: index + 1, verdict: '틀림(정답)', reason: detailedIncorrectChoiceReasons[id] || `틀린 부분은 “${focus}”입니다. 올바른 기준은 ${guide}입니다. 따라서 이 선택지가 제시한 내용은 그 기준을 잘못 적용한 것이므로 ‘옳지 않은 것’의 정답입니다.` }
+    if (index + 1 === answer) return { choiceNo: index + 1, verdict: '정답', reason: detailedIncorrectChoiceReasons[id] || `정답 표현은 “${focus}”입니다. ${guide} 이 기준을 지문 조건에 적용하면 ${['①','②','③','④'][answer - 1]}번이 정답입니다.` }
     return { choiceNo: index + 1, verdict: '오답', reason: `“${focus}”라는 표현을 지문의 조건·예외와 대조합니다. ${guide} 이 선택지는 공식 확정답안 ${['①','②','③','④'][answer - 1]}번과 일치하지 않습니다.` }
   })
 }
@@ -171,7 +172,7 @@ function direction(topicId, topicName, stem, evidence) {
 const questions = markers.map((marker, index) => {
   const number = Number(marker[1]); const raw = joinLines(questionsText.slice(marker.index + marker[0].length, markers[index + 1]?.index)).replace(/ⓛ/g, '①'); const parts = raw.split(/(?=[①②③④])/); const stem = joinLines(parts.shift()); const options = parts.map((part) => joinLines(part.replace(/^[①②③④]\s*/, ''))).slice(0, 4)
   const subject = subjectId(number); const questionNo = number - (subject === 'FR' ? 0 : subject === 'TX' ? 40 : 80); const topic = classification(number); const concept = topicNames[topic.primaryTopicId]; const answer = answerMap[number]; const evidence = evidenceFor(stem); const guide = topicGuides[topic.primaryTopicId] || `${concept}의 기준을 적용합니다.`; const correctFocus = optionFocus(options[answer - 1]); const id = `${examMonth}-${subject}-${String(questionNo).padStart(2, '0')}`
-  return { id, examMonth, year: 2025, round: monthLabel, subjectId: subject, questionNo, number, primaryTopicId: topic.primaryTopicId, secondaryTopicIds: [], concept, reviewNeeded: topic.reviewNeeded, stem, options, answer, evidence, optionEvidence: optionEvidenceFor(options, answer), evidenceColor: 'extracted', direction: directionOverrides[id] || direction(topic.primaryTopicId, concept, stem, evidence), explanation: `공식 확정답안은 ${['①','②','③','④'][answer - 1]} ${answer}번입니다. 정답 선택지의 핵심 표현은 “${correctFocus}”입니다. ${guide} 지문에 제시된 조건·기간·수치를 먼저 확인한 뒤, 이 표현이 해당 기준과 맞는지 대조해 답안을 판단합니다.`, solutionSteps: ['문제가 묻는 판단 기준과 “옳지 않은 것·옳은 것” 같은 요구를 먼저 확인합니다.', guide, `정답 선택지 ${['①','②','③','④'][answer - 1]}번의 “${correctFocus}” 표현을 지문 조건과 대조합니다.`], choiceAnalysis: choiceAnalysisForQuestion(options, answer, guide, stem), relatedConcepts: [concept], commonMistake: '문제의 요구 표현과 지문에서 제시한 조건·기간·단위를 확인하지 않고 선택지를 고르는 실수입니다.', calculation: verifiedCalculations[id] || null, explanationStatus: 'completed' }
+  return { id, examMonth, year: 2025, round: monthLabel, subjectId: subject, questionNo, number, primaryTopicId: topic.primaryTopicId, secondaryTopicIds: [], concept, reviewNeeded: topic.reviewNeeded, stem, options, answer, evidence, optionEvidence: optionEvidenceFor(options, answer), evidenceColor: 'extracted', direction: directionOverrides[id] || direction(topic.primaryTopicId, concept, stem, evidence), explanation: `공식 확정답안은 ${['①','②','③','④'][answer - 1]} ${answer}번입니다. 정답 선택지의 핵심 표현은 “${correctFocus}”입니다. ${guide} 지문에 제시된 조건·기간·수치를 먼저 확인한 뒤, 이 표현이 해당 기준과 맞는지 대조해 답안을 판단합니다.`, solutionSteps: ['문제가 묻는 판단 기준과 “옳지 않은 것·옳은 것” 같은 요구를 먼저 확인합니다.', guide, `정답 선택지 ${['①','②','③','④'][answer - 1]}번의 “${correctFocus}” 표현을 지문 조건과 대조합니다.`], choiceAnalysis: choiceAnalysisForQuestion(options, answer, guide, stem, id), relatedConcepts: [concept], commonMistake: '문제의 요구 표현과 지문에서 제시한 조건·기간·단위를 확인하지 않고 선택지를 고르는 실수입니다.', calculation: verifiedCalculations[id] || null, explanationStatus: 'completed' }
 })
 
 const incomplete = questions.filter((question) => question.options.length !== 4)

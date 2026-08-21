@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs'
+import { detailedIncorrectChoiceReasons } from '../src/data/detailedIncorrectChoiceReasons.js'
 
 const questionsText = readFileSync('/private/tmp/jaekyung-extract/questions.txt', 'utf8')
 const answersText = readFileSync('/private/tmp/jaekyung-extract/answers.txt', 'utf8')
@@ -326,7 +327,12 @@ function optionEvidenceFor(options, answer) {
   return options.map((option, index) => ({ choiceNo: index + 1, text: optionFocus(option), type: index + 1 === answer ? 'correct' : 'eliminate', color: index + 1 === answer ? 'purple' : 'red' }))
 }
 function conciseExplanation({ id, primaryTopicId, topicName, answer, options, stem }) {
-  if (selfExplanations[id]) return selfExplanations[id]
+  if (selfExplanations[id]) {
+    const explanation = selfExplanations[id]
+    const detailedReason = detailedIncorrectChoiceReasons[id]
+    if (detailedReason) explanation.choiceAnalysis = explanation.choiceAnalysis.map((choice) => choice.choiceNo === answer ? { ...choice, verdict: /옳지 않은|해당하지 않는|아닌 것/.test(stem) ? '틀림(정답)' : choice.verdict, reason: detailedReason } : choice)
+    return explanation
+  }
   const guide = topicGuides[primaryTopicId] || `${topicName}의 기준을 문제 조건에 적용합니다.`
   const calculation = /계산하면|금액은 얼마|수량은 얼마|원가를|세액을|이익은 얼마|자료가 다음/.test(stem)
   const asksForIncorrect = /옳지 않은|해당하지 않는|아닌 것/.test(stem)
@@ -338,7 +344,7 @@ function conciseExplanation({ id, primaryTopicId, topicName, answer, options, st
       : ['문제가 요구하는 판단 기준을 확인합니다.', guide, `기준에 맞는 선택지는 ${['①','②','③','④'][answer - 1]} ${answer}번입니다.`],
     choiceAnalysis: options.map((option, index) => index + 1 === answer
       ? asksForIncorrect
-        ? { choiceNo: index + 1, verdict: '틀림(정답)', reason: `틀린 부분은 “${optionFocus(option)}”입니다. 올바른 기준은 ${guide}입니다. 따라서 이 선택지가 제시한 내용은 그 기준을 잘못 적용한 것이므로 ‘옳지 않은 것’의 정답입니다.` }
+        ? { choiceNo: index + 1, verdict: '틀림(정답)', reason: detailedIncorrectChoiceReasons[id] || `틀린 부분은 “${optionFocus(option)}”입니다. 올바른 기준은 ${guide}입니다. 따라서 이 선택지가 제시한 내용은 그 기준을 잘못 적용한 것이므로 ‘옳지 않은 것’의 정답입니다.` }
         : { choiceNo: index + 1, verdict: '정답', reason: `이 선택지는 “${optionFocus(option)}”이라는 요건을 제시합니다. ${guide} 따라서 해당 요건을 충족하므로 정답입니다.` }
       : { choiceNo: index + 1, verdict: '오답', reason: `${topicName}의 핵심 기준과 맞는지 다시 확인하세요.` }),
     commonMistake: calculation ? '계산 전에 단위·기간·포함 여부를 확인하지 않고 바로 수치를 대입하는 실수입니다.' : '문제의 “옳지 않은 것”, “포함 여부”, “예외” 표현을 놓치는 실수입니다.',

@@ -1,4 +1,5 @@
 import { examSets } from '../src/data/examSets.js'
+import { detailedIncorrectChoiceReasons } from '../src/data/detailedIncorrectChoiceReasons.js'
 
 const errors = []
 const genericPatterns = [/공식 확정답안의 정답 선택지가 아닙니다/, /지문의 조건과 보기의 핵심 표현을 대조해 답안을 확인하세요/]
@@ -23,8 +24,8 @@ for (const exam of examSets) {
     }
     if (incorrectQuestionPattern.test(question.stem)) {
       const answerAnalysis = question.choiceAnalysis?.find((item) => item.choiceNo === question.answer)
-      const answerEvidence = question.optionEvidence?.find((item) => item.choiceNo === question.answer)?.text
-      if (!answerAnalysis || !/틀림|옳지|잘못|맞지 않|반대/.test(answerAnalysis.verdict) || !/틀린 이유|틀린 부분|잘못|맞지 않|반대/.test(answerAnalysis.reason) || !/올바른 기준/.test(answerAnalysis.reason) || incompleteIncorrectReasonPatterns.some((pattern) => pattern.test(answerAnalysis.reason)) || !answerEvidence || !answerAnalysis.reason.includes(answerEvidence)) errors.push(`${exam.id} ${question.id}: ‘옳지 않은 것’ 정답의 구체적 오답 이유 누락`)
+      const detailedReason = detailedIncorrectChoiceReasons[question.id]
+      if (!detailedReason || !answerAnalysis || !/틀림|옳지|잘못|맞지 않|반대/.test(answerAnalysis.verdict) || answerAnalysis.reason !== detailedReason || detailedReason.length < 90 || incompleteIncorrectReasonPatterns.some((pattern) => pattern.test(detailedReason))) errors.push(`${exam.id} ${question.id}: ‘옳지 않은 것’ 정답의 문항별 상세 오답 이유 누락`)
     }
   }
   for (const question of calculationQuestions) {
