@@ -4,6 +4,7 @@ import './calculation.css'
 import './option-evidence.css'
 import './korean-wrap.css'
 import './quiz.css'
+import './concept-map.css'
 import { examSets, questions } from './data/examSets.js'
 import taxonomy from './data/taxonomy.json'
 import { FREQUENCY_ANALYSIS_NOTE, frequencyAnalysis, frequencyEntryForProblem, frequencySubjectSummaries } from './data/frequencyAnalysis.js'
@@ -28,9 +29,13 @@ const state = {
   topOnly: false,
   frequencyRank: null,
   frequencySubject: 'FR',
+  conceptMapSubject: 'FR',
+  conceptMapRank: 1,
+  conceptMapMode: 'concept',
   examMonth: saved.examMonth || '2025-01',
   studiedFrequencyKeys: saved.studiedFrequencyKeys || [],
 }
+let conceptMapInstance = null
 
 function persist() {
   localStorage.setItem('jaekyung-study-state', JSON.stringify({ currentId: state.currentId, favorites: state.favorites, attempts: state.attempts, wrongQuestionIds: state.wrongQuestionIds, studiedFrequencyKeys: state.studiedFrequencyKeys, examMonth: state.examMonth }))
@@ -121,8 +126,113 @@ function frequency() {
     <div class="frequency-tabs" role="tablist" aria-label="빈출 분석 과목">${subjects.map((item) => `<button role="tab" aria-selected="${item.id === subject}" class="${item.id === subject ? 'active' : ''}" data-action="frequency-subject" data-subject="${item.id}">${item.name}</button>`).join('')}</div>
     <section class="frequency-score"><div><span>평균</span><strong>${summary.average}점</strong></div><div><span>최저</span><strong>${summary.minimum}점</strong></div><div><span>2문제 실수 시 최저</span><strong>${summary.twoMistakesMinimum}점</strong></div></section>
     <p class="frequency-caution">점수는 “공개기출에서 해당 유형 문제를 모두 맞힌 가정”의 분석 기준입니다.</p>
-    <section class="frequency-list" aria-label="${subjectName(subject)} 핵심 세부유형 TOP 12">${entries.map((entry) => `<article class="frequency-item"><button class="frequency-item__open" data-action="open-frequency-topic" data-subject="${entry.subject}" data-rank="${entry.rank}"><span class="frequency-rank">${entry.rank}</span><span><strong>${escapeHtml(entry.topicName)}</strong><small>출제 ${entry.questionCount}회 · 현재 연결 ${entry.problemIds.length}문제</small></span><b>문제 보기 →</b></button><p>${escapeHtml(entry.note)}</p><div class="frequency-item__footer"><span class="${isFrequencyStudied(entry) ? 'study-state is-done' : 'study-state'}">${isFrequencyStudied(entry) ? '학습 완료' : '학습 전'}</span><button class="study-toggle" data-action="toggle-frequency-study" data-subject="${entry.subject}" data-rank="${entry.rank}">${isFrequencyStudied(entry) ? '학습 완료 취소' : '학습 완료로 표시'}</button></div></article>`).join('')}</section>
+    <section class="frequency-list" aria-label="${subjectName(subject)} 핵심 세부유형 TOP 12">${entries.map((entry) => `<article class="frequency-item"><button class="frequency-item__open" data-action="open-frequency-topic" data-subject="${entry.subject}" data-rank="${entry.rank}"><span class="frequency-rank">${entry.rank}</span><span><strong>${escapeHtml(entry.topicName)}</strong><small>출제 ${entry.questionCount}회 · 현재 연결 ${entry.problemIds.length}문제</small></span><b>문제 보기 →</b></button><p>${escapeHtml(entry.note)}</p><div class="frequency-item__footer"><span class="${isFrequencyStudied(entry) ? 'study-state is-done' : 'study-state'}">${isFrequencyStudied(entry) ? '학습 완료' : '학습 전'}</span><div class="frequency-item__actions"><button class="study-toggle" data-action="open-frequency-map" data-subject="${entry.subject}" data-rank="${entry.rank}">개념 지도</button><button class="study-toggle" data-action="toggle-frequency-study" data-subject="${entry.subject}" data-rank="${entry.rank}">${isFrequencyStudied(entry) ? '학습 완료 취소' : '학습 완료로 표시'}</button></div></div></article>`).join('')}</section>
   </main>`
+}
+function cleanMapTerm(value) {
+  const term = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!term || term.length > 20 || !/[가-힣]/.test(term) || /\d|^(옳은 것|옳지 않은 것|\d{4}년)$/.test(term)) return null
+  return term
+}
+function conceptMapQuestions(entry) {
+  return entry.problemIds.map((id) => questions.find((question) => question.id === id)).filter(Boolean)
+}
+function mapTermRows(mapQuestions) {
+  const terms = new Map()
+  for (const question of mapQuestions) {
+    const candidates = question.conceptTags?.map((tag) => tag.label) || [question.concept, ...(question.relatedConcepts || []), ...(question.direction?.keyTerms || [])]
+    for (const candidate of new Set(candidates.map(cleanMapTerm).filter(Boolean))) {
+      if (!terms.has(candidate)) terms.set(candidate, new Set())
+      terms.get(candidate).add(question.id)
+    }
+  }
+  return [...terms.entries()].map(([label, ids]) => ({ label, ids: [...ids] })).sort((a, b) => b.ids.length - a.ids.length || a.label.localeCompare(b.label, 'ko'))
+}
+function conceptMapPage() {
+  const entry = frequencyAnalysis.find((item) => item.subject === state.conceptMapSubject && item.rank === state.conceptMapRank)
+  if (!entry) return frequency()
+  const mapQuestions = conceptMapQuestions(entry)
+  const terms = mapTermRows(mapQuestions)
+  const modeCopy = {
+    concept: '문제에서 함께 확인할 개념과 핵심 표현',
+    sequence: '같은 회차에서 번호가 연속되는 출제 흐름',
+    repeat: '여러 회차에서 같은 번호로 반복되는 출제 흐름',
+  }
+  return `<main class="screen concept-map-screen"><header class="page-head">${button('‹', 'frequency', 'icon')}<div><p class="eyebrow">CONCEPT MAP</p><h2>빈출 개념 지도</h2></div></header>
+    <section class="concept-map-intro"><span>핵심 TOP 12 · ${entry.rank}순위</span><strong>${escapeHtml(entry.topicName)}</strong><p>${escapeHtml(modeCopy[state.conceptMapMode])}</p></section>
+    <div class="concept-map-modes" role="tablist" aria-label="개념 지도 연결 방식">${[['concept', '개념 연결'], ['sequence', '연속 출제'], ['repeat', '회차 반복']].map(([id, label]) => `<button role="tab" aria-selected="${state.conceptMapMode === id}" class="${state.conceptMapMode === id ? 'active' : ''}" data-action="concept-map-mode" data-mode="${id}">${label}</button>`).join('')}</div>
+    ${mapQuestions.length ? `<section class="concept-map-card"><div class="concept-map-key"><span class="key-topic">빈출 유형</span><span class="key-concept">개념·표현</span><span class="key-question">문제</span></div><div id="concept-map" class="concept-map-canvas" aria-label="${escapeHtml(entry.topicName)} 개념 지도"></div><p class="concept-map-help">원을 눌러 연결을 살피고, 문제 원을 누르면 해당 문제로 이동합니다. 선이 많을수록 같은 개념이 더 자주 연결된 것입니다.</p></section>
+      <section class="concept-map-summary"><strong>이 유형에서 확인되는 표현</strong><div>${terms.slice(0, 12).map((term) => `<span>${escapeHtml(term.label)} <b>${term.ids.length}</b></span>`).join('')}</div></section>` : '<div class="empty-state">이 빈출 유형에는 현재 지도에 표시할 연결 문항이 없습니다.</div>'}
+  </main>`
+}
+function buildConceptMapElements(entry) {
+  const mapQuestions = conceptMapQuestions(entry)
+  const terms = mapTermRows(mapQuestions)
+  const elements = [{ data: { id: 'root', label: entry.topicName }, classes: 'root' }]
+  const termIds = new Map()
+  terms.forEach((term, index) => {
+    const id = `term-${index}`
+    termIds.set(term.label, id)
+    elements.push({ data: { id, label: term.label, count: term.ids.length, questionIds: term.ids }, classes: 'concept' })
+    elements.push({ data: { id: `root-${id}`, source: 'root', target: id, weight: term.ids.length }, classes: 'topic-edge' })
+  })
+  for (const question of mapQuestions) {
+    const id = `question-${question.id}`
+    elements.push({ data: { id, label: `${question.examMonth.slice(5)}월 ${question.questionNo}번`, questionId: question.id }, classes: 'question' })
+    const candidates = new Set((question.conceptTags?.map((tag) => tag.label) || [question.concept, ...(question.relatedConcepts || []), ...(question.direction?.keyTerms || [])]).map(cleanMapTerm).filter(Boolean))
+    for (const term of candidates) {
+      const termId = termIds.get(term)
+      if (termId) elements.push({ data: { id: `link-${termId}-${id}`, source: termId, target: id }, classes: 'concept-edge' })
+    }
+  }
+  const byMonth = new Map()
+  const byNumber = new Map()
+  for (const question of mapQuestions) {
+    if (!byMonth.has(question.examMonth)) byMonth.set(question.examMonth, [])
+    byMonth.get(question.examMonth).push(question)
+    if (!byNumber.has(question.questionNo)) byNumber.set(question.questionNo, [])
+    byNumber.get(question.questionNo).push(question)
+  }
+  for (const rows of byMonth.values()) {
+    rows.sort((a, b) => a.questionNo - b.questionNo)
+    for (let index = 1; index < rows.length; index += 1) {
+      if (rows[index].questionNo - rows[index - 1].questionNo === 1) elements.push({ data: { id: `sequence-${rows[index - 1].id}-${rows[index].id}`, source: `question-${rows[index - 1].id}`, target: `question-${rows[index].id}` }, classes: 'sequence-edge' })
+    }
+  }
+  for (const rows of byNumber.values()) {
+    rows.sort((a, b) => a.examMonth.localeCompare(b.examMonth))
+    for (let index = 1; index < rows.length; index += 1) elements.push({ data: { id: `repeat-${rows[index - 1].id}-${rows[index].id}`, source: `question-${rows[index - 1].id}`, target: `question-${rows[index].id}` }, classes: 'repeat-edge' })
+  }
+  return elements
+}
+async function initializeConceptMap() {
+  const container = document.querySelector('#concept-map')
+  const entry = frequencyAnalysis.find((item) => item.subject === state.conceptMapSubject && item.rank === state.conceptMapRank)
+  if (!container || !entry) return
+  const { default: cytoscape } = await import('cytoscape')
+  if (!document.querySelector('#concept-map') || state.page !== 'concept-map') return
+  conceptMapInstance?.destroy()
+  conceptMapInstance = cytoscape({
+    container,
+    elements: buildConceptMapElements(entry),
+    layout: { name: state.conceptMapMode === 'concept' ? 'cose' : 'circle', padding: 26, animate: false },
+    style: [
+      { selector: 'node', style: { label: 'data(label)', color: '#38342e', 'font-size': 10, 'text-wrap': 'wrap', 'text-max-width': 78, 'text-valign': 'center', 'text-halign': 'center', 'background-color': '#e6ded2', width: 34, height: 34 } },
+      { selector: 'node.root', style: { 'background-color': '#2d4c46', color: '#fff', width: 68, height: 68, 'font-size': 11, 'font-weight': 700, 'text-max-width': 58 } },
+      { selector: 'node.concept', style: { 'background-color': '#e8a85a', width: 'mapData(count, 1, 12, 34, 54)', height: 'mapData(count, 1, 12, 34, 54)', 'font-weight': 700 } },
+      { selector: 'node.question', style: { 'background-color': '#fffdf9', 'border-width': 2, 'border-color': '#857e70', width: 31, height: 31, 'font-size': 8 } },
+      { selector: 'edge', style: { width: 1.5, 'line-color': '#cfc2b1', 'curve-style': 'bezier', opacity: 0.9 } },
+      { selector: 'edge.topic-edge', style: { width: 'mapData(weight, 1, 12, 1.5, 5)', 'line-color': '#8eb4a2' } },
+      { selector: 'edge.sequence-edge', style: { width: 3, 'line-color': '#bc6d49', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#bc6d49' } },
+      { selector: 'edge.repeat-edge', style: { width: 2.5, 'line-color': '#7768a7', 'line-style': 'dashed' } },
+      { selector: '.map-hidden', style: { display: 'none' } },
+    ],
+  })
+  if (state.conceptMapMode !== 'concept') {
+    conceptMapInstance.nodes('.root, .concept').addClass('map-hidden')
+    conceptMapInstance.edges('.topic-edge, .concept-edge').addClass('map-hidden')
+  }
+  conceptMapInstance.on('tap', 'node.question', (event) => openQuestion(event.target.data('questionId')))
 }
 function markEvidence(text, items) {
   if (!state.evidence || !items?.length) return escapeHtml(text)
@@ -137,6 +247,7 @@ function questionView() {
   const q = current(); const examQuestions = questions.filter((question) => question.examMonth === q.examMonth); const position = examQuestions.indexOf(q); const previous = examQuestions[position - 1]; const next = examQuestions[position + 1]; const attempt = attemptFor(q.id); const answered = Boolean(attempt); const wasCorrect = attempt?.choiceNo === q.answer
   return `<main class="screen question-screen"><header class="question-header">${button('‹', 'year', 'icon')}<span>${q.year}년 ${q.round} · ${subjectName(q.subjectId)}</span><button class="bookmark ${isFavorite(q.id) ? 'saved' : ''}" data-action="favorite">${isFavorite(q.id) ? '★' : '☆'}<small>헷갈림</small></button></header>
     <div class="question-meta"><span>${q.questionNo}번</span><div><b>${escapeHtml(topicName(q.primaryTopicId))}</b><i>${escapeHtml(q.concept)}${q.sourceVerificationNote ? ' · 원문·답안 검토 중' : q.reviewNeeded ? ' · 분류 검토 필요' : ''}</i>${frequencyBadge(q)}</div></div>
+    ${q.conceptTags?.length ? `<section class="question-concept-tags"><div><b>연결 태그</b><span>같은 태그가 있는 문제를 개념 지도에서 함께 봅니다.</span></div><p>${q.conceptTags.map((tag) => `<i>${escapeHtml(tag.label)}</i>`).join('')}</p>${frequencyEntryForProblem(q.id) ? `<button data-action="open-question-map">이 빈출 유형의 개념 지도 보기 →</button>` : ''}</section>` : ''}
     <article class="question-body"><div class="stem">${markEvidence(q.stem, q.evidence)}</div><p class="answer-guide">정답을 고른 뒤 채점하세요. 틀린 문제는 자동으로 오답 다시 풀기에 저장됩니다.</p><ol class="options">${q.options.map((option, index) => { const choiceNo = index + 1; const marks = q.optionEvidence?.filter((item) => item.choiceNo === choiceNo) || []; const marker = marks[0]; const status = answered ? (choiceNo === q.answer ? ' is-correct' : choiceNo === attempt.choiceNo ? ' is-wrong' : '') : ''; return `<li class="option${status}"><button data-choice="${choiceNo}" aria-pressed="${attempt?.choiceNo === choiceNo}"><span>${['①','②','③','④'][index]}</span><div>${markEvidence(option, state.evidence ? marks : [])}${state.evidence && marker ? `<small class="option-evidence ${marker.type}">${marker.type === 'correct' ? '정답 판단 표현' : '오답 확인 표현'}: “${escapeHtml(marker.text)}”</small>` : ''}</div></button></li>` }).join('')}</ol>${answered ? `<p class="answer-result ${wasCorrect ? 'correct' : 'wrong'}"><b>${wasCorrect ? '정답입니다.' : '오답입니다.'}</b> ${wasCorrect ? '정답 논리를 해설에서 다시 확인하세요.' : `정답은 ${['①','②','③','④'][q.answer - 1]} ${q.answer}번이며, 이 문항은 오답 다시 풀기에 저장됐습니다.`}</p>` : ''}</article>
     <section class="learning-tools">
       ${button(state.evidence ? '근거 숨기기' : '근거 보기', 'evidence', state.evidence ? 'tool active-tool' : 'tool')}
@@ -165,7 +276,10 @@ function wrong() {
 }
 function render({ preserveScroll = false } = {}) {
   const scrollPosition = preserveScroll ? window.scrollY : 0
-  app.innerHTML = state.page === 'home' ? home() : state.page === 'year' ? year() : state.page === 'review' ? review() : state.page === 'favorites' ? favorites() : state.page === 'wrong' ? wrong() : state.page === 'frequency' ? frequency() : questionView()
+  conceptMapInstance?.destroy()
+  conceptMapInstance = null
+  app.innerHTML = state.page === 'home' ? home() : state.page === 'year' ? year() : state.page === 'review' ? review() : state.page === 'favorites' ? favorites() : state.page === 'wrong' ? wrong() : state.page === 'frequency' ? frequency() : state.page === 'concept-map' ? conceptMapPage() : questionView()
+  if (state.page === 'concept-map') initializeConceptMap()
   window.requestAnimationFrame(() => window.scrollTo({ top: scrollPosition, behavior: 'auto' }))
 }
 app.addEventListener('click', (event) => {
@@ -186,6 +300,9 @@ app.addEventListener('click', (event) => {
   if (!action) return
   if (action === 'frequency-subject') { state.frequencySubject = actionElement.dataset.subject; return render() }
   if (action === 'open-frequency-topic') { state.filter = actionElement.dataset.subject; state.topicFilter = 'all'; state.topOnly = false; state.frequencyRank = Number(actionElement.dataset.rank); state.page = 'year'; return render() }
+  if (action === 'open-frequency-map') { state.conceptMapSubject = actionElement.dataset.subject; state.conceptMapRank = Number(actionElement.dataset.rank); state.conceptMapMode = 'concept'; state.page = 'concept-map'; return render() }
+  if (action === 'concept-map-mode') { state.conceptMapMode = actionElement.dataset.mode; return render({ preserveScroll: true }) }
+  if (action === 'open-question-map') { const entry = frequencyEntryForProblem(current().id); if (entry) { state.conceptMapSubject = entry.subject; state.conceptMapRank = entry.rank; state.conceptMapMode = 'concept'; state.page = 'concept-map'; return render() } }
   if (action === 'toggle-frequency-study') {
     const key = `${actionElement.dataset.subject}-${actionElement.dataset.rank}`
     state.studiedFrequencyKeys = state.studiedFrequencyKeys.includes(key) ? state.studiedFrequencyKeys.filter((item) => item !== key) : [...state.studiedFrequencyKeys, key]

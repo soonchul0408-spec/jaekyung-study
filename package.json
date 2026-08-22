@@ -13,11 +13,15 @@
     "check:exam-quality": "node scripts/checkExamQuality.mjs",
     "check:explanations": "node scripts/checkExplanationQuality.mjs",
     "check:source-integrity": "node scripts/checkSourceIntegrity.mjs",
+    "check:concept-tags": "node scripts/checkConceptTags.mjs",
     "check:frequency": "node scripts/checkFrequencyAnalysis.mjs",
     "audit:student-explanations": "node scripts/auditStudentExplanationQuality.mjs",
     "audit:expert-facts": "node scripts/auditExpertFactReview.mjs"
   },
   "devDependencies": {
     "vite": "^8.1.5"
+  },
+  "dependencies": {
+    "cytoscape": "^3.34.1"
   }
 }

@@ -1,0 +1,19 @@
+.frequency-item__actions{display:flex;gap:10px;align-items:center}
+.concept-map-intro{padding:18px;border-radius:16px;background:#2d4c46;color:#fff}
+.concept-map-intro span{display:block;color:#c6dbcc;font-size:.7rem;font-weight:800}
+.concept-map-intro strong{display:block;margin-top:7px;font-size:1.15rem}
+.concept-map-intro p{margin:7px 0 0;color:#e4eee6;font-size:.8rem;line-height:1.5}
+.concept-map-modes{display:flex;gap:7px;overflow-x:auto;margin:16px 0}
+.concept-map-modes button{flex:0 0 auto;padding:9px 11px;border-radius:18px;background:#e9e4da;color:#696359;font-size:.78rem;font-weight:800}
+.concept-map-modes .active{background:#e8a85a;color:#292820}
+.concept-map-card{padding:12px;border:1px solid #dfd5c7;border-radius:16px;background:#fffdf9}
+.concept-map-key{display:flex;flex-wrap:wrap;gap:6px;padding:2px 2px 10px;font-size:.65rem;font-weight:800}
+.concept-map-key span{padding:4px 7px;border-radius:6px}
+.key-topic{color:#fff;background:#2d4c46}.key-concept{background:#f6d6a7;color:#624620}.key-question{border:1px solid #a79c8f;color:#665f55}
+.concept-map-canvas{height:460px;border-radius:11px;background:radial-gradient(circle at 50% 45%,#f6f2ea 0%,#fffdf9 72%)}
+.concept-map-help{margin:10px 3px 2px;color:#756e62;font-size:.71rem;line-height:1.55}
+.concept-map-summary{margin-top:16px;padding:15px;border-radius:14px;background:#f2eee6}
+.concept-map-summary strong{font-size:.82rem}.concept-map-summary div{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.concept-map-summary span{padding:6px 8px;border-radius:8px;background:#fffdf9;color:#625d54;font-size:.72rem}.concept-map-summary b{color:#a65d3d}
+.question-concept-tags{margin:-8px 0 18px;padding:13px;border:1px solid #e0d8ca;border-radius:13px;background:#fffdf9}.question-concept-tags>div{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.question-concept-tags b{font-size:.76rem;color:#4d554b}.question-concept-tags span{color:#827a6e;font-size:.66rem;text-align:right}.question-concept-tags p{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 0}.question-concept-tags i{padding:5px 7px;border-radius:7px;background:#f5e4c9;color:#6c4d2c;font-size:.7rem;font-style:normal}.question-concept-tags button{margin-top:10px;padding:2px 0;color:#8f5c3d;font-size:.7rem;font-weight:800;text-decoration:underline}
+@media(max-width:430px){.frequency-item__footer{align-items:flex-start}.frequency-item__actions{flex-wrap:wrap}.concept-map-canvas{height:390px}}

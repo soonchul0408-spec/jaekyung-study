@@ -6,6 +6,7 @@ import { questions as julyQuestions } from './questions-2025-07.js'
 import { questions as septemberQuestions } from './questions-2025-09.js'
 import { questions as novemberQuestions } from './questions-2025-11.js'
 import { questions as decemberQuestions } from './questions-2025-12.js'
+import { applyConceptTags } from './conceptTags.js'
 import { detailedIncorrectChoiceReasons } from './detailedIncorrectChoiceReasons.js'
 
 // PDF 페이지 머리말이 마지막 선택지로 섞인 기존 추출값과, 가로 표의 행 순서가
@@ -66,15 +67,17 @@ function applyVerifiedIncorrectReason(question) {
 }
 
 // 새 회차는 반드시 이 목록에 등록한다. 품질·동등성 검사도 이 목록 전체를 검사한다.
+const enrichQuestions = (rows) => rows.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason).map(applyConceptTags)
+
 export const examSets = [
-  { id: '2025-01', label: '2025년 1월', questions: januaryQuestions.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason), baseline: true },
-  { id: '2025-03', label: '2025년 3월', questions: marchQuestions.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason) },
-  { id: '2025-05', label: '2025년 5월', questions: mayQuestions.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason) },
-  { id: '2025-06', label: '2025년 6월', questions: juneQuestions.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason) },
-  { id: '2025-07', label: '2025년 7월', questions: julyQuestions.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason) },
-  { id: '2025-09', label: '2025년 9월', questions: septemberQuestions.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason) },
-  { id: '2025-11', label: '2025년 11월', questions: novemberQuestions.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason) },
-  { id: '2025-12', label: '2025년 12월', questions: decemberQuestions.map(applySourceCorrections).map(enrichCalculationTeaching).map(applyVerifiedIncorrectReason) },
+  { id: '2025-01', label: '2025년 1월', questions: enrichQuestions(januaryQuestions), baseline: true },
+  { id: '2025-03', label: '2025년 3월', questions: enrichQuestions(marchQuestions) },
+  { id: '2025-05', label: '2025년 5월', questions: enrichQuestions(mayQuestions) },
+  { id: '2025-06', label: '2025년 6월', questions: enrichQuestions(juneQuestions) },
+  { id: '2025-07', label: '2025년 7월', questions: enrichQuestions(julyQuestions) },
+  { id: '2025-09', label: '2025년 9월', questions: enrichQuestions(septemberQuestions) },
+  { id: '2025-11', label: '2025년 11월', questions: enrichQuestions(novemberQuestions) },
+  { id: '2025-12', label: '2025년 12월', questions: enrichQuestions(decemberQuestions) },
 ]
 
 export const questions = examSets.flatMap((exam) => exam.questions)
