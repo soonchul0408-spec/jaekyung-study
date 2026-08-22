@@ -5,6 +5,7 @@ import './option-evidence.css'
 import './korean-wrap.css'
 import './quiz.css'
 import './concept-map.css'
+import './sync.css'
 import { examSets, questions } from './data/examSets.js'
 import taxonomy from './data/taxonomy.json'
 import { FREQUENCY_ANALYSIS_NOTE, frequencyAnalysis, frequencyEntryForProblem, frequencySubjectSummaries } from './data/frequencyAnalysis.js'
@@ -34,11 +35,66 @@ const state = {
   conceptMapMode: 'concept',
   examMonth: saved.examMonth || '2025-01',
   studiedFrequencyKeys: saved.studiedFrequencyKeys || [],
+  syncPin: saved.syncPin || null,
+  syncMessage: '',
+  lastUpdatedAt: saved.lastUpdatedAt || null,
 }
 let conceptMapInstance = null
+let syncTimer = null
 
-function persist() {
-  localStorage.setItem('jaekyung-study-state', JSON.stringify({ currentId: state.currentId, favorites: state.favorites, attempts: state.attempts, wrongQuestionIds: state.wrongQuestionIds, studiedFrequencyKeys: state.studiedFrequencyKeys, examMonth: state.examMonth }))
+function studySnapshot() {
+  return { currentId: state.currentId, favorites: state.favorites, attempts: state.attempts, wrongQuestionIds: state.wrongQuestionIds, studiedFrequencyKeys: state.studiedFrequencyKeys, examMonth: state.examMonth, lastUpdatedAt: state.lastUpdatedAt }
+}
+function persist({ sync = true } = {}) {
+  state.lastUpdatedAt = new Date().toISOString()
+  localStorage.setItem('jaekyung-study-state', JSON.stringify({ ...studySnapshot(), syncPin: state.syncPin }))
+  if (sync && state.syncPin) queueCloudSave()
+}
+function mergeStudyState(remote = {}, local = studySnapshot()) {
+  const attempts = { ...(remote.attempts || {}) }
+  for (const [id, attempt] of Object.entries(local.attempts || {})) {
+    if (!attempts[id] || new Date(attempt.attemptedAt || 0) >= new Date(attempts[id].attemptedAt || 0)) attempts[id] = attempt
+  }
+  const wrongQuestionIds = Object.entries(attempts).filter(([id, attempt]) => questions.find((question) => question.id === id)?.answer !== attempt.choiceNo).map(([id]) => id)
+  const remoteNewer = new Date(remote.lastUpdatedAt || 0) > new Date(local.lastUpdatedAt || 0)
+  return {
+    currentId: remoteNewer ? remote.currentId || local.currentId : local.currentId || remote.currentId,
+    favorites: [...new Set([...(remote.favorites || []), ...(local.favorites || [])])],
+    attempts,
+    wrongQuestionIds,
+    studiedFrequencyKeys: [...new Set([...(remote.studiedFrequencyKeys || []), ...(local.studiedFrequencyKeys || [])])],
+    examMonth: remoteNewer ? remote.examMonth || local.examMonth : local.examMonth || remote.examMonth,
+    lastUpdatedAt: remoteNewer ? remote.lastUpdatedAt : local.lastUpdatedAt,
+  }
+}
+function applyStudyState(snapshot) {
+  for (const key of ['currentId', 'favorites', 'attempts', 'wrongQuestionIds', 'studiedFrequencyKeys', 'examMonth', 'lastUpdatedAt']) if (snapshot[key] !== undefined) state[key] = snapshot[key]
+}
+async function cloudRequest(payload) {
+  const response = await fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+  const result = await response.json()
+  if (!response.ok) throw new Error(result.error || '동기화에 실패했습니다.')
+  return result
+}
+function queueCloudSave() {
+  window.clearTimeout(syncTimer)
+  syncTimer = window.setTimeout(async () => {
+    try { await cloudRequest({ action: 'save', pin: state.syncPin, state: studySnapshot() }); state.syncMessage = '방금 동기화됨' }
+    catch { state.syncMessage = '오프라인 상태 · 기기에 안전하게 저장됨' }
+  }, 700)
+}
+async function connectCloud(pin, { silent = false } = {}) {
+  if (!/^\d{4}$/.test(pin)) { state.syncMessage = '숫자 4자리를 입력해 주세요.'; if (!silent) render(); return }
+  state.syncMessage = '기록을 불러오는 중…'; if (!silent) render()
+  try {
+    const result = await cloudRequest({ action: 'load', pin })
+    applyStudyState(mergeStudyState(result.state || {}, studySnapshot()))
+    state.syncPin = pin
+    persist({ sync: false })
+    await cloudRequest({ action: 'save', pin, state: studySnapshot() })
+    state.syncMessage = '동기화 연결됨 · 모든 기기에서 같은 PIN을 입력하세요.'
+  } catch (error) { state.syncMessage = error.message }
+  if (!silent) render()
 }
 function current() { return questions.find((question) => question.id === state.currentId) || questions[0] }
 function escapeHtml(value = '') { return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]) }
@@ -82,6 +138,7 @@ function home() {
       <button data-action="favorites"><span>03</span><strong>헷갈리는 문제</strong><small>${state.favorites.length}문제 저장됨</small><b>→</b></button>
       <button data-action="wrong"><span>04</span><strong>오답 다시 풀기</strong><small>${state.wrongQuestionIds.length}문제 · 틀린 문제만 재도전</small><b>→</b></button>
       <button data-action="frequency"><span>05</span><strong>빈출 분석</strong><small>공개기출 8회분 · 핵심 TOP 12</small><b>→</b></button>
+      <button data-action="sync"><span>06</span><strong>기기 동기화</strong><small>${state.syncPin ? '4자리 PIN 연결됨 · ' + (state.syncMessage || '기록 자동 저장') : '4자리 PIN으로 기록 저장'}</small><b>→</b></button>
     </nav>
     <p class="source-note">출처: 삼일회계법인 2025년 재경관리사 기출문제 및 확정답안. 문항별 공식 해설은 제공되지 않았습니다.</p>
   </main>`
@@ -275,11 +332,21 @@ function wrong() {
     ${wrongQuestions.length ? `<section class="retry-card"><strong>${wrongQuestions.length}문제 남음</strong><p>첫 문제부터 다시 풀며 정답 논리를 확인하세요.</p>${button('첫 오답 문제 풀기 →', `open-wrong`, 'primary')}</section>${collapsibleQuestionList('오답 문제 목록', wrongQuestions, `${wrongQuestions.length}문제 · 제목을 눌러 이동`)}` : '<div class="empty-state"><b>현재 저장된 오답이 없습니다.</b><br/>문제를 풀고 틀린 선택지를 고르면 자동으로 이곳에 모입니다.</div>'}
   </main>`
 }
+function sync() {
+  return `<main class="screen sync-screen"><header class="page-head">${button('‹', 'home', 'icon')}<div><p class="eyebrow">STUDY SYNC</p><h2>기기 동기화</h2></div></header>
+    <section class="sync-card"><span class="sync-lock">⌁</span><h3>4자리 PIN으로 기록 연결</h3><p>오답, 즐겨찾기, 마지막 문제, 푼 기록, 빈출 학습 완료 상태를 안전하게 저장합니다. 다른 맥북이나 폰에서도 같은 PIN을 입력하면 이어서 공부할 수 있습니다.</p>
+      <form data-sync-form><label for="sync-pin">${state.syncPin ? '다른 PIN으로 연결' : '개인 동기화 PIN'}</label><input id="sync-pin" name="pin" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="off" placeholder="숫자 4자리" required><button class="primary" type="submit">${state.syncPin ? '이 PIN으로 전환' : '기록 동기화 시작'}</button></form>
+      <p class="sync-status ${state.syncMessage.includes('실패') || state.syncMessage.includes('오프라인') ? 'is-warning' : ''}" aria-live="polite">${escapeHtml(state.syncMessage || (state.syncPin ? '연결됨 · 변경 내용은 자동 저장됩니다.' : 'PIN은 기기 간 기록을 찾는 개인용 코드입니다.'))}</p>
+      ${state.syncPin ? `<button class="sync-disconnect" data-action="disconnect-sync">이 기기에서 PIN 연결 해제</button>` : ''}
+    </section>
+    <p class="sync-note">4자리 PIN은 간편한 개인용 동기화 코드입니다. 타인과 공유하지 마세요. 기기 내 기존 기록은 PIN 연결 시 클라우드 기록과 합쳐 보존합니다.</p>
+  </main>`
+}
 function render({ preserveScroll = false } = {}) {
   const scrollPosition = preserveScroll ? window.scrollY : 0
   conceptMapInstance?.destroy()
   conceptMapInstance = null
-  app.innerHTML = state.page === 'home' ? home() : state.page === 'year' ? year() : state.page === 'review' ? review() : state.page === 'favorites' ? favorites() : state.page === 'wrong' ? wrong() : state.page === 'frequency' ? frequency() : state.page === 'concept-map' ? conceptMapPage() : questionView()
+  app.innerHTML = state.page === 'home' ? home() : state.page === 'year' ? year() : state.page === 'review' ? review() : state.page === 'favorites' ? favorites() : state.page === 'wrong' ? wrong() : state.page === 'sync' ? sync() : state.page === 'frequency' ? frequency() : state.page === 'concept-map' ? conceptMapPage() : questionView()
   if (state.page === 'concept-map') initializeConceptMap()
   window.requestAnimationFrame(() => window.scrollTo({ top: scrollPosition, behavior: 'auto' }))
 }
@@ -304,6 +371,7 @@ app.addEventListener('click', (event) => {
   if (action === 'open-frequency-map') { state.conceptMapSubject = actionElement.dataset.subject; state.conceptMapRank = Number(actionElement.dataset.rank); state.conceptMapMode = 'concept'; state.page = 'concept-map'; return render() }
   if (action === 'concept-map-mode') { state.conceptMapMode = actionElement.dataset.mode; return render({ preserveScroll: true }) }
   if (action === 'open-question-map') { const entry = frequencyEntryForProblem(current().id); if (entry) { state.conceptMapSubject = entry.subject; state.conceptMapRank = entry.rank; state.conceptMapMode = 'concept'; state.page = 'concept-map'; return render() } }
+  if (action === 'disconnect-sync') { state.syncPin = null; state.syncMessage = '이 기기에서만 연결을 해제했습니다. 클라우드 기록은 유지됩니다.'; persist({ sync: false }); return render() }
   if (action === 'toggle-frequency-study') {
     const key = `${actionElement.dataset.subject}-${actionElement.dataset.rank}`
     state.studiedFrequencyKeys = state.studiedFrequencyKeys.includes(key) ? state.studiedFrequencyKeys.filter((item) => item !== key) : [...state.studiedFrequencyKeys, key]
@@ -317,4 +385,11 @@ app.addEventListener('click', (event) => {
   if (['evidence', 'direction', 'explanation'].includes(action)) { state[action] = !state[action]; return render({ preserveScroll: true }) }
   go(action)
 })
+app.addEventListener('submit', (event) => {
+  const form = event.target.closest('[data-sync-form]')
+  if (!form) return
+  event.preventDefault()
+  connectCloud(new FormData(form).get('pin'))
+})
 render()
+if (state.syncPin) connectCloud(state.syncPin, { silent: true })
