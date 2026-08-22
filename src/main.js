@@ -161,28 +161,33 @@ function conceptMapPage() {
   return `<main class="screen concept-map-screen"><header class="page-head">${button('‹', 'frequency', 'icon')}<div><p class="eyebrow">CONCEPT MAP</p><h2>빈출 개념 지도</h2></div></header>
     <section class="concept-map-intro"><span>핵심 TOP 12 · ${entry.rank}순위</span><strong>${escapeHtml(entry.topicName)}</strong><p>${escapeHtml(modeCopy[state.conceptMapMode])}</p></section>
     <div class="concept-map-modes" role="tablist" aria-label="개념 지도 연결 방식">${[['concept', '개념 연결'], ['sequence', '연속 출제'], ['repeat', '회차 반복']].map(([id, label]) => `<button role="tab" aria-selected="${state.conceptMapMode === id}" class="${state.conceptMapMode === id ? 'active' : ''}" data-action="concept-map-mode" data-mode="${id}">${label}</button>`).join('')}</div>
-    ${mapQuestions.length ? `<section class="concept-map-card"><div class="concept-map-key"><span class="key-topic">빈출 유형</span><span class="key-concept">개념·표현</span><span class="key-question">문제</span></div><div id="concept-map" class="concept-map-canvas" aria-label="${escapeHtml(entry.topicName)} 개념 지도"></div><p class="concept-map-help">원을 눌러 연결을 살피고, 문제 원을 누르면 해당 문제로 이동합니다. 선이 많을수록 같은 개념이 더 자주 연결된 것입니다.</p></section>
+    ${mapQuestions.length ? `<section class="concept-map-card"><div class="concept-map-key"><span class="key-topic">빈출 유형</span>${state.conceptMapMode === 'concept' ? '<span class="key-concept">개념·표현</span>' : '<span class="key-flow">출제 흐름</span>'}<span class="key-question">문제</span></div><div id="concept-map" class="concept-map-canvas ${state.conceptMapMode === 'concept' ? '' : 'question-flow-map'}" aria-label="${escapeHtml(entry.topicName)} 개념 지도"></div><p class="concept-map-help">${state.conceptMapMode === 'concept' ? '원을 눌러 연결을 살피고, 문제 원을 누르면 해당 문제로 이동합니다. 선이 많을수록 같은 개념이 더 자주 연결된 것입니다.' : '문제 원은 크게 표시됩니다. 선을 따라 같은 회차의 연속 출제 또는 회차 간 반복 흐름을 확인하고, 원을 누르면 문제로 이동합니다.'}</p></section>
       <section class="concept-map-summary"><strong>이 유형에서 확인되는 표현</strong><div>${terms.slice(0, 12).map((term) => `<span>${escapeHtml(term.label)} <b>${term.ids.length}</b></span>`).join('')}</div></section>` : '<div class="empty-state">이 빈출 유형에는 현재 지도에 표시할 연결 문항이 없습니다.</div>'}
   </main>`
 }
-function buildConceptMapElements(entry) {
+function buildConceptMapElements(entry, mode = state.conceptMapMode) {
   const mapQuestions = conceptMapQuestions(entry)
   const terms = mapTermRows(mapQuestions)
-  const elements = [{ data: { id: 'root', label: entry.topicName }, classes: 'root' }]
+  const elements = []
   const termIds = new Map()
-  terms.forEach((term, index) => {
-    const id = `term-${index}`
-    termIds.set(term.label, id)
-    elements.push({ data: { id, label: term.label, count: term.ids.length, questionIds: term.ids }, classes: 'concept' })
-    elements.push({ data: { id: `root-${id}`, source: 'root', target: id, weight: term.ids.length }, classes: 'topic-edge' })
-  })
+  if (mode === 'concept') {
+    elements.push({ data: { id: 'root', label: entry.topicName }, classes: 'root' })
+    terms.forEach((term, index) => {
+      const id = `term-${index}`
+      termIds.set(term.label, id)
+      elements.push({ data: { id, label: term.label, count: term.ids.length, questionIds: term.ids }, classes: 'concept' })
+      elements.push({ data: { id: `root-${id}`, source: 'root', target: id, weight: term.ids.length }, classes: 'topic-edge' })
+    })
+  }
   for (const question of mapQuestions) {
     const id = `question-${question.id}`
-    elements.push({ data: { id, label: `${question.examMonth.slice(5)}월 ${question.questionNo}번`, questionId: question.id }, classes: 'question' })
-    const candidates = new Set((question.conceptTags?.map((tag) => tag.label) || [question.concept, ...(question.relatedConcepts || []), ...(question.direction?.keyTerms || [])]).map(cleanMapTerm).filter(Boolean))
-    for (const term of candidates) {
-      const termId = termIds.get(term)
-      if (termId) elements.push({ data: { id: `link-${termId}-${id}`, source: termId, target: id }, classes: 'concept-edge' })
+    elements.push({ data: { id, label: `${question.examMonth.slice(5)}월\n${question.questionNo}번`, questionId: question.id }, classes: mode === 'concept' ? 'question' : 'question focus-question' })
+    if (mode === 'concept') {
+      const candidates = new Set((question.conceptTags?.map((tag) => tag.label) || [question.concept, ...(question.relatedConcepts || []), ...(question.direction?.keyTerms || [])]).map(cleanMapTerm).filter(Boolean))
+      for (const term of candidates) {
+        const termId = termIds.get(term)
+        if (termId) elements.push({ data: { id: `link-${termId}-${id}`, source: termId, target: id }, classes: 'concept-edge' })
+      }
     }
   }
   const byMonth = new Map()
@@ -193,13 +198,13 @@ function buildConceptMapElements(entry) {
     if (!byNumber.has(question.questionNo)) byNumber.set(question.questionNo, [])
     byNumber.get(question.questionNo).push(question)
   }
-  for (const rows of byMonth.values()) {
+  if (mode === 'sequence') for (const rows of byMonth.values()) {
     rows.sort((a, b) => a.questionNo - b.questionNo)
     for (let index = 1; index < rows.length; index += 1) {
       if (rows[index].questionNo - rows[index - 1].questionNo === 1) elements.push({ data: { id: `sequence-${rows[index - 1].id}-${rows[index].id}`, source: `question-${rows[index - 1].id}`, target: `question-${rows[index].id}` }, classes: 'sequence-edge' })
     }
   }
-  for (const rows of byNumber.values()) {
+  if (mode === 'repeat') for (const rows of byNumber.values()) {
     rows.sort((a, b) => a.examMonth.localeCompare(b.examMonth))
     for (let index = 1; index < rows.length; index += 1) elements.push({ data: { id: `repeat-${rows[index - 1].id}-${rows[index].id}`, source: `question-${rows[index - 1].id}`, target: `question-${rows[index].id}` }, classes: 'repeat-edge' })
   }
@@ -215,23 +220,19 @@ async function initializeConceptMap() {
   conceptMapInstance = cytoscape({
     container,
     elements: buildConceptMapElements(entry),
-    layout: { name: state.conceptMapMode === 'concept' ? 'cose' : 'circle', padding: 26, animate: false },
+    layout: { name: state.conceptMapMode === 'concept' ? 'cose' : 'grid', padding: 34, animate: false, avoidOverlap: true, nodeDimensionsIncludeLabels: true },
     style: [
       { selector: 'node', style: { label: 'data(label)', color: '#38342e', 'font-size': 10, 'text-wrap': 'wrap', 'text-max-width': 78, 'text-valign': 'center', 'text-halign': 'center', 'background-color': '#e6ded2', width: 34, height: 34 } },
       { selector: 'node.root', style: { 'background-color': '#2d4c46', color: '#fff', width: 68, height: 68, 'font-size': 11, 'font-weight': 700, 'text-max-width': 58 } },
       { selector: 'node.concept', style: { 'background-color': '#e8a85a', width: 'mapData(count, 1, 12, 34, 54)', height: 'mapData(count, 1, 12, 34, 54)', 'font-weight': 700 } },
       { selector: 'node.question', style: { 'background-color': '#fffdf9', 'border-width': 2, 'border-color': '#857e70', width: 31, height: 31, 'font-size': 8 } },
+      { selector: 'node.focus-question', style: { width: 52, height: 52, 'font-size': 10, 'font-weight': 800, 'border-width': 3 } },
       { selector: 'edge', style: { width: 1.5, 'line-color': '#cfc2b1', 'curve-style': 'bezier', opacity: 0.9 } },
       { selector: 'edge.topic-edge', style: { width: 'mapData(weight, 1, 12, 1.5, 5)', 'line-color': '#8eb4a2' } },
       { selector: 'edge.sequence-edge', style: { width: 3, 'line-color': '#bc6d49', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#bc6d49' } },
       { selector: 'edge.repeat-edge', style: { width: 2.5, 'line-color': '#7768a7', 'line-style': 'dashed' } },
-      { selector: '.map-hidden', style: { display: 'none' } },
     ],
   })
-  if (state.conceptMapMode !== 'concept') {
-    conceptMapInstance.nodes('.root, .concept').addClass('map-hidden')
-    conceptMapInstance.edges('.topic-edge, .concept-edge').addClass('map-hidden')
-  }
   conceptMapInstance.on('tap', 'node.question', (event) => openQuestion(event.target.data('questionId')))
 }
 function markEvidence(text, items) {
